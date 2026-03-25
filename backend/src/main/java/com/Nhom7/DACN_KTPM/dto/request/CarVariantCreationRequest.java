@@ -25,6 +25,8 @@ public class CarVariantCreationRequest {
     private List<String> imageUrls;
 
     // Các thông số kỹ thuật (có thể null nếu chưa có khi tạo)
+    private Integer seatCapacity;
+    private String fuelType;
     private Integer length;
     private Integer width;
     private Integer height;

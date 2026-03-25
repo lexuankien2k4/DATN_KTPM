@@ -18,7 +18,7 @@ public class CarImage {
     @Column(name = "image_url", nullable = false, length = 512)
     private String imageUrl;
 
-    // Mối quan hệ Nhiều-Một: Nhiều ảnh thuộc về một Variant
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "variant_id", nullable = false)
     private CarVariant carVariant;

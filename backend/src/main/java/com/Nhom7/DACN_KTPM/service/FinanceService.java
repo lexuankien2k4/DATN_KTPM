@@ -158,7 +158,7 @@ public class FinanceService {
 
             if (remainingBalance < 0) {
                 log.warn("Remaining balance went negative at month {}. Check calculations.", month);
-                remainingBalance = 0; // Prevent further negative values
+                remainingBalance = 0;
             }
         }
 

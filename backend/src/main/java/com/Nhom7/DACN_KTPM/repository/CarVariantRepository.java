@@ -7,10 +7,10 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-// 👇 SỬA LẠI: Đổi Integer thành Long
+
 public interface CarVariantRepository extends JpaRepository<CarVariant, Long> {
 
-    // 👇 SỬA LẠI: modelId cũng nên là Long (vì bảng car_models id là bigint)
+
     List<CarVariant> findByCarModelIdAndIsActiveTrueOrderByNameAsc(Long modelId);
 
     List<CarVariant> findByCarModelIdOrderByNameAsc(Long modelId);

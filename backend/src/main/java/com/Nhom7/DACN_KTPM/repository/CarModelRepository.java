@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-// 👇 QUAN TRỌNG: Phải là Long để khớp với Service và Entity
+
 public interface CarModelRepository extends JpaRepository<CarModel, Long> {
 
     boolean existsByName(String name);

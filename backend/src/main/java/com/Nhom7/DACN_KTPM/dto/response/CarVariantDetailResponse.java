@@ -17,6 +17,8 @@ public class CarVariantDetailResponse {
     private List<CarImageResponse> images; // Danh sách ảnh
 
     // Thông số kỹ thuật
+    private Integer seatCapacity;
+    private String fuelType;
     private Integer length;
     private Integer width;
     private Integer height;

@@ -31,7 +31,7 @@ public class CarCategoryService {
     public CarCategoryResponse createCategory(CarCategoryCreationRequest request) {
         log.info("Creating new car category: {}", request.getName());
         if (carCategoryRepository.existsByName(request.getName())) {
-            throw new AppException(ErrorCode.CATEGORY_EXISTED); // Cần định nghĩa mã lỗi này
+            throw new AppException(ErrorCode.CATEGORY_EXISTED);
         }
 
         CarCategory category = carCategoryMapper.toCarCategory(request);

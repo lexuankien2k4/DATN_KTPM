@@ -100,7 +100,6 @@ public class CarModelService {
 
     @Transactional
     // @PreAuthorize("hasRole('ADMIN')")
-    // 👇 SỬA: Integer id -> Long id
     public void deleteCarModel(Long id) {
         log.info("Deleting car model with ID: {}", id);
         if (!carModelRepository.existsById(id)) {

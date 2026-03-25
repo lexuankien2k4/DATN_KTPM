@@ -37,21 +37,21 @@ public class Consultation {
 
     // --- QUAN TRỌNG: KHỚP VỚI DATABASE ---
 
-    // SQL: showroom_id int -> Java liên kết với Entity Showroom có ID Integer
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "showroom_id")
     private Showroom showroom;
 
-    // SQL: variant_id bigint -> Java liên kết với Entity CarVariant có ID Long
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "variant_id")
     private CarVariant carVariant;
 
     @Column(name = "created_at", updatable = false)
-    @CreationTimestamp // Tự động lấy giờ hiện tại khi lưu
+    @CreationTimestamp
     private LocalDateTime createdAt;
-    // --- BỔ SUNG THÊM ---
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "staff_id") // Tên cột trong DB sẽ là staff_id
+    @JoinColumn(name = "staff_id")
     private User staff;
 }

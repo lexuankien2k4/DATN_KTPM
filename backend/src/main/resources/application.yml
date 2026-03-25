@@ -3,8 +3,8 @@ server:
   address: 0.0.0.0
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/vinfast_db_new
-    driverClassName: "com.mysql.cj.jdbc.Driver"
+    url: jdbc:mysql://localhost:3306/Vinfast_db
+    driver-class-name: "com.mysql.cj.jdbc.Driver"
     password: root
     username: root
   jpa:

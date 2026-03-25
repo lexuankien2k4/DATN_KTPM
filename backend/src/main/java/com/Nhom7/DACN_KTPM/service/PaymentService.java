@@ -86,7 +86,7 @@ public class PaymentService {
                 .amount(BigDecimal.valueOf(request.getAmount()))
                 .user(savedUser)          // Link tới User vừa tạo
 
-                // 👇 LƯU TRỰC TIẾP CÁC TRƯỜNG THÔNG TIN VÀO BẢNG DEPOSIT
+                // LƯU TRỰC TIẾP CÁC TRƯỜNG THÔNG TIN VÀO BẢNG DEPOSIT
                 .customerName(request.getFullName())
                 .phone(request.getPhone())
                 .email(request.getEmail())
@@ -155,7 +155,7 @@ public class PaymentService {
         return PaymentResponse.builder().paymentUrl(paymentUrl).build();
     }
 
-    // 👇 CẬP NHẬT HÀM LẤY DANH SÁCH ĐỂ HIỂN THỊ ĐÚNG THÔNG TIN MỚI LƯU
+    //  CẬP NHẬT HÀM LẤY DANH SÁCH ĐỂ HIỂN THỊ ĐÚNG THÔNG TIN MỚI LƯU
     public List<DepositResponse> getAllDeposits() {
         return depositRepository.findAll().stream().map(deposit -> {
 
@@ -181,7 +181,7 @@ public class PaymentService {
 
                     .userId(deposit.getUser() != null ? deposit.getUser().getId() : null)
 
-                    // 👇 Trả về các trường thông tin chi tiết
+                    //  Trả về các trường thông tin chi tiết
                     .customerName(finalName)
                     .customerPhone(finalPhone)
                     .email(deposit.getEmail())       // Map email

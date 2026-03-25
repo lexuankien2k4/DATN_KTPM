@@ -13,4 +13,6 @@ public class CarVariantBasicResponse {
     private Boolean isActive;
     private String modelName; // Tên dòng xe
     private String firstImageUrl;
+    private Integer seatCapacity;
+    private String fuelType;
 }

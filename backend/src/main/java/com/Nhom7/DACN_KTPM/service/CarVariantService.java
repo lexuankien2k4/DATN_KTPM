@@ -77,14 +77,14 @@ public class CarVariantService {
         return carVariantMapper.toCarVariantDetailResponse(carVariant);
     }
 
-    // 👇 SỬA: Integer modelId -> Long modelId
+
     public List<CarVariantBasicResponse> getActiveVariantsByModel(Long modelId) {
         log.info("Fetching active variants for model ID: {}", modelId);
         List<CarVariant> variants = carVariantRepository.findByCarModelIdAndIsActiveTrueOrderByNameAsc(modelId);
         return carVariantMapper.toCarVariantBasicResponseList(variants);
     }
 
-    // 👇 SỬA: Integer id -> Long id
+
     public CarVariantDetailResponse getVariantDetail(Long id) {
         log.info("Fetching car variant detail for ID: {}", id);
         CarVariant carVariant = carVariantRepository.findById(id)
@@ -93,7 +93,6 @@ public class CarVariantService {
     }
 
     @Transactional
-    // 👇 SỬA: Integer id -> Long id
     public CarVariantDetailResponse updateVariant(Long id, CarVariantUpdateRequest request) {
         log.info("Updating car variant with ID: {}", id);
         CarVariant carVariant = carVariantRepository.findById(id)
@@ -118,7 +117,6 @@ public class CarVariantService {
     }
 
     @Transactional
-    // 👇 SỬA: Integer id -> Long id
     public void deleteVariant(Long id) {
         log.info("Deleting car variant with ID: {}", id);
         if (!carVariantRepository.existsById(id)) {

@@ -27,6 +27,11 @@ public class CarVariant {
     @Column(name = "name", nullable = false)
     private String name; // tên biến thể
 
+    @Column(name = "seat_capacity")
+    private Integer seatCapacity; // chỗ ngồi
+
+    @Column(name = "fuel_type") // loại nhiên liệu
+    private String fuelType; // Ví dụ: "Xăng", "Dầu", "Điện", "Hybrid"
     @Column(name = "price", nullable = false)
     private Long price;
     @Column(name = "discounted_price",nullable = true)

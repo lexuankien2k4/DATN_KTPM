@@ -43,7 +43,7 @@
                   <th class="p-4 border-b text-center w-16">ID</th>
                   <th class="p-4 border-b w-32 text-center">Hình ảnh</th>
                   <th class="p-4 border-b">Tên Phiên Bản</th>
-                  <th class="p-4 border-b">Dòng Xe</th>
+                  <th class="p-4 border-b text-center">Đặc tính</th>
                   <th class="p-4 border-b text-right">Giá Niêm Yết</th>
                   <th class="p-4 border-b text-center">Trạng thái</th>
                   <th class="p-4 border-b text-center w-40">Hành động</th>
@@ -60,8 +60,16 @@
                       <img :src="getImageUrl(variant.firstImageUrl)" class="h-full w-full object-contain bg-white" @error="handleImageError">
                     </div>
                   </td>
-                  <td class="p-4 font-semibold text-gray-800">{{ variant.name }}</td>
-                  <td class="p-4"><span class="bg-blue-100 text-blue-800 py-1 px-3 rounded-full text-xs font-bold">{{ variant.modelName || 'N/A' }}</span></td>
+                  <td class="p-4">
+                    <div class="font-semibold text-gray-800">{{ variant.name }}</div>
+                    <div class="text-xs text-blue-600 font-bold mt-1">{{ variant.modelName || 'N/A' }}</div>
+                  </td>
+                  <td class="p-4 text-center">
+                    <div class="flex flex-col items-center gap-1">
+                      <span v-if="variant.seatCapacity" class="bg-gray-100 text-gray-700 py-0.5 px-2 rounded text-[10px] font-bold border"><i class="fas fa-users mr-1"></i>{{ variant.seatCapacity }} chỗ</span>
+                      <span v-if="variant.fuelType" class="bg-blue-50 text-blue-700 py-0.5 px-2 rounded text-[10px] font-bold border border-blue-100"><i class="fas fa-gas-pump mr-1"></i>{{ variant.fuelType }}</span>
+                    </div>
+                  </td>
                   <td class="p-4 text-right font-mono font-medium text-blue-600">{{ formatPrice(variant.price) }}</td>
                   <td class="p-4 text-center">
                     <span :class="variant.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'" class="py-1 px-3 rounded-full text-xs font-bold">
@@ -156,7 +164,10 @@
                 </h3>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4 text-sm">
-                    <div class="col-span-full font-bold text-gray-700 bg-gray-100 p-1.5 rounded mt-2">Kích thước & Khung gầm</div>
+                    <div class="col-span-full font-bold text-gray-700 bg-gray-100 p-1.5 rounded mt-2">Đặc tính chung</div>
+                    <div><label>Số chỗ ngồi</label><input v-model.number="form.seatCapacity" type="number" class="w-full px-2 py-1.5 border rounded" placeholder="VD: 5, 7"></div>
+                    <div><label>Loại nhiên liệu</label><input v-model="form.fuelType" type="text" class="w-full px-2 py-1.5 border rounded" placeholder="Xăng, Điện, Hybrid..."></div>
+                    <div class="col-span-2"></div> <div class="col-span-full font-bold text-gray-700 bg-gray-100 p-1.5 rounded mt-2">Kích thước & Khung gầm</div>
                     <div><label>Dài (mm)</label><input v-model.number="form.length" type="number" class="w-full px-2 py-1.5 border rounded"></div>
                     <div><label>Rộng (mm)</label><input v-model.number="form.width" type="number" class="w-full px-2 py-1.5 border rounded"></div>
                     <div><label>Cao (mm)</label><input v-model.number="form.height" type="number" class="w-full px-2 py-1.5 border rounded"></div>
@@ -265,7 +276,9 @@
                  </h3>
                  
                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-8 text-sm text-gray-700">
-                    <div class="border-b pb-1"><span class="text-gray-500 block text-xs">Dài x Rộng x Cao</span> <b>{{ selectedVariant?.length }} x {{ selectedVariant?.width }} x {{ selectedVariant?.height }} mm</b></div>
+                    <div class="border-b pb-1"><span class="text-gray-500 block text-xs">Số chỗ ngồi</span> <b class="text-blue-600">{{ selectedVariant?.seatCapacity }} chỗ</b></div>
+                    <div class="border-b pb-1"><span class="text-gray-500 block text-xs">Loại nhiên liệu</span> <b>{{ selectedVariant?.fuelType }}</b></div>
+                    <div class="border-b pb-1"></div> <div class="border-b pb-1"><span class="text-gray-500 block text-xs">Dài x Rộng x Cao</span> <b>{{ selectedVariant?.length }} x {{ selectedVariant?.width }} x {{ selectedVariant?.height }} mm</b></div>
                     <div class="border-b pb-1"><span class="text-gray-500 block text-xs">Chiều dài cơ sở</span> <b>{{ selectedVariant?.wheelbase }} mm</b></div>
                     <div class="border-b pb-1"><span class="text-gray-500 block text-xs">Khoảng sáng gầm</span> <b>{{ selectedVariant?.groundClearance }} mm</b></div>
                     <div class="border-b pb-1"><span class="text-gray-500 block text-xs">Công suất tối đa</span> <b>{{ selectedVariant?.maxPower }} hp</b></div>
@@ -329,8 +342,10 @@ const selectedFiles = ref([])
 const imagePreviews = ref([])
 const currentImages = ref([])
 
+// Khai báo thêm seatCapacity và fuelType vào form reactive
 const form = reactive({
   id: null, modelId: null, name: '', price: 0, discountedPrice: 0, isActive: true,
+  seatCapacity: null, fuelType: '', // Bổ sung
   length: null, width: null, height: null, wheelbase: null, groundClearance: null, wheelSize: null,
   maxPower: null, maxTorque: null, battery: null, rangeNedc: null,
   drivetrain: '', driveModes: '', entertainmentScreen: null, speakerSystem: '',

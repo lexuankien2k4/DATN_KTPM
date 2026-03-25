@@ -24,7 +24,6 @@ public class CarModel {
     @Column(name = "body_type")
     private String bodyType;
 
-    // --- SỬA TẠI ĐÂY: Thêm @Builder.Default ---
     @Builder.Default
     @Column(name = "is_active")
     private Boolean isActive = true;
