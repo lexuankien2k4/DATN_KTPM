@@ -1,0 +1,30 @@
+@startuml
+title Biểu đồ hoạt động: Quy trình Quản lý Ô tô
+
+start
+:Quản lý truy cập mục "Quản lý Ô tô";
+:Hệ thống truy xuất danh sách từ CarVariantRepository;
+
+repeat
+  :Hiển thị danh sách biến thể (Variant);
+  if (Thao tác của Quản lý?) then (Thêm mới)
+    :Nhập thông tin xe (Tên, Giá, Pin, Chỗ ngồi);
+    if (Thông tin hợp lệ?) then (Có)
+      :Lưu vào CarVariant Entity;
+      :Thông báo thành công;
+    else (Không)
+      :Hiển thị lỗi nhập liệu;
+    endif
+  else (Chỉnh sửa/Cập nhật Kho)
+    :Chọn một biến thể cụ thể;
+    :Hệ thống hiển thị danh sách số khung (VIN) từ CarStock;
+    :Cập nhật trạng thái kho (Nhập kho/Đã bán/Giữ chỗ);
+    :Lưu thay đổi vào CarStock Entity;
+  endif
+  
+  :Hệ thống cập nhật lại bảng hiển thị;
+backward :Tiếp tục quản lý;
+repeat while (Tiếp tục?) is (Có)
+
+stop
+@enduml

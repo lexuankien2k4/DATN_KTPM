@@ -2,6 +2,7 @@ package com.Nhom7.DACN_KTPM.dto.response;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -15,4 +16,10 @@ public class CarVariantBasicResponse {
     private String firstImageUrl;
     private Integer seatCapacity;
     private String fuelType;
+    private Long availableStock;
+    private String rangeNedc;
+    private String carType;
+    private String drivetrain;
+    private BigDecimal battery;
+
 }

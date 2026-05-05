@@ -1,0 +1,68 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam Style strictuml
+skinparam shadowing false
+skinparam linetype polyline
+
+' --- MODULE GIAO DIỆN (BOUNDARY) ---
+class GDTuVanAI <<Boundary>> {
+    + hienThiLoiChao()
+    + hienThiCauHoiGoiY()
+    + nhanTinNhan(message : String)
+    + hienThiDanhSachGoiY(cars : List<CarVariant>)
+}
+
+' --- MODULE XỬ LÝ (CONTROL) ---
+class AIConsultationService <<Control>> {
+    + analyzeNhuCau(input : String) : Map
+    + findBestMatches(criteria : Map) : List<CarVariant>
+    + generateExplanation(variant : CarVariant) : String
+}
+
+interface CarModelRepository <<Control>> {
+    + findAllActive() : List<CarModel>
+}
+
+' --- MODULE THỰC THỂ (ENTITY) ---
+' Dựa trên các file Entity bạn đã cung cấp
+
+class CarCategory {
+    - id : Integer
+    - name : String
+}
+
+class CarModel {
+    - id : Long
+    - name : String
+    - bodyType : String
+    - isActive : Boolean
+}
+
+class CarVariant {
+    - id : Long
+    - name : String
+    - price : BigDecimal
+    - seatCapacity : Integer
+    - battery : BigDecimal
+    - maxPower : Integer
+    - rangeNedc : Integer
+}
+
+class CarImage {
+    - id : Integer
+    - imageUrl : String
+}
+
+' --- QUAN HỆ (RELATIONSHIPS) ---
+' Sử dụng Composition (Hình thoi đen) theo mẫu ảnh
+
+CarCategory "1" *-- "0..*" CarModel : "contains"
+CarModel "1" *-- "0..*" CarVariant : "includes"
+CarVariant "1" *-- "0..*" CarImage : "has"
+
+' Quan hệ điều phối
+GDTuVanAI ..> AIConsultationService : "gửi yêu cầu chat"
+AIConsultationService --> CarModelRepository : "truy vấn dữ liệu xe"
+CarModelRepository ..> CarModel : "manages"
+
+@enduml

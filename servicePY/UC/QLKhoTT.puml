@@ -1,0 +1,60 @@
+@startuml
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+
+actor "Quản lý" as Admin
+boundary "GDQuanLyKho : Boundary" as UI
+control "ConsulationController : Control" as Controller
+entity "CarStock : Entity" as Stock
+
+title Biểu đồ trình tự: UC Quản lý Kho xe
+
+autonumber 1 1 "<b>0"
+
+== 1. Nhập kho lô xe mới ==
+Admin -> UI: 1. Tải lên file danh sách xe mới
+activate UI
+    UI -> Controller: 2. importStock(fileData)
+    activate Controller
+        Controller -> Controller: 3. Kiểm tra tính duy nhất của mã VIN
+        alt VIN không trùng
+            create Stock
+            Controller -> Stock: 4. saveNewStock(data)
+            activate Stock
+                Stock -> Stock: 5. setStatus(IN_STOCK)
+                Stock --> Controller: 6. Xác nhận lưu thành công
+            deactivate Stock
+            Controller --> UI: 7. Hiển thị "Nhập kho thành công"
+        else Lỗi trùng VIN
+            Controller --> UI: 8. Báo lỗi "Mã VIN đã tồn tại"
+        end
+    deactivate Controller
+deactivate UI
+
+== 2. Quy trình Giữ chỗ & Giao xe ==
+note over Controller, Stock: Diễn ra khi có giao dịch Đặt cọc
+Controller -> Stock: 9. findFirstAvailableByFIFO()
+activate Stock
+    Stock -> Stock: 10. setStatus(RESERVED)
+    Stock --> Controller: 11. Trả về xe đã giữ chỗ
+deactivate Stock
+
+Admin -> UI: 12. Chọn xe và nhấn "Bắt đầu PDI"
+activate UI
+    UI -> Controller: 13. updatePDIStatus(vin)
+    activate Controller
+        Controller -> Stock: 14. setStatus(PDI_PENDING)
+        Controller --> UI: 15. Cập nhật thành công
+    deactivate Controller
+deactivate UI
+
+Admin -> UI: 16. Nhấn "Bàn giao xe"
+activate UI
+    UI -> Controller: 17. deliverCar(vin)
+    activate Controller
+        Controller -> Stock: 18. setStatus(DELIVERED)
+        Controller --> UI: 19. Thông báo hoàn tất vòng đời xe
+    deactivate Controller
+deactivate UI
+
+@enduml

@@ -1,0 +1,45 @@
+@startuml
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+
+actor "Quản lý" as Admin
+boundary "GDQuanLyLaiThu : Boundary" as UI
+control "ConsulationController : Control" as Controller
+entity "Consulation : Entity" as TestDrive
+
+
+Admin -> UI: 1. Truy cập "Quản lý đăng ký lái thử"
+activate UI
+    UI -> Controller: 2. Yêu cầu danh sách đăng ký
+    activate Controller
+        Controller -> Controller: 3. Truy vấn dữ liệu TestDrive
+        Controller --> UI: 4. Trả về danh sách (Khách, Xe, Lịch hẹn)
+    deactivate Controller
+    UI --> Admin: 5. Hiển thị danh sách lên màn hình
+deactivate UI
+
+Admin -> UI: 6. Chọn một yêu cầu cụ thể
+activate UI
+    UI -> Controller: 7. getTestDriveDetail(id)
+    activate Controller
+        Controller --> UI: 8. Trả về thông tin liên lạc & xe
+    deactivate Controller
+    Admin -> Admin: 9. Gọi điện xác nhận & chuẩn bị xe/giấy tờ
+deactivate UI
+
+Admin -> UI: 10. Nhập ghi chú cảm nhận & đánh giá
+activate UI
+    Admin -> UI: 11. Nhấn "Cập nhật"
+    UI -> Controller: 12. updateTestDriveStatus(id, notes, rating)
+    activate Controller
+        Controller -> TestDrive: 13. setNotes(notes)
+        activate TestDrive
+        TestDrive -> TestDrive: 14. setStatus("Đã hoàn thành")
+        TestDrive --> Controller: 15. Xác nhận cập nhật
+        deactivate TestDrive
+        Controller --> UI: 16. Thông báo thành công
+    deactivate Controller
+    UI --> Admin: 17. Cập nhật lại trạng thái trên giao diện
+deactivate UI
+
+@enduml

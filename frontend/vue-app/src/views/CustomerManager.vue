@@ -1,265 +1,447 @@
 <template>
-  <div class="flex h-screen bg-gray-100 font-sans">
+  <div class="admin-page-wrapper">
     <AdminSidebar :isOpen="isSidebarOpen" @close="isSidebarOpen = false" />
 
-    <main class="flex-1 flex flex-col overflow-hidden relative">
-      <header class="h-20 bg-white shadow-sm flex items-center justify-between px-6 z-10">
-        <div class="flex items-center">
-          <button @click="isSidebarOpen = true" class="md:hidden text-gray-600 mr-4">
-            <i class="fas fa-bars text-xl"></i>
+    <div class="admin-content-area">
+      <header class="admin-topbar">
+        <div class="d-flex align-items-center gap-3">
+          <button @click="isSidebarOpen = true" class="btn btn-light d-md-none border-0 p-2">
+            <i class="fas fa-bars text-secondary fs-5"></i>
           </button>
           <div>
-            <h1 class="text-2xl font-bold text-gray-800">Khách hàng Đã Đặt Cọc</h1>
-            <p class="text-xs text-gray-500">Danh sách khách hàng đã chốt đơn thành công</p>
+            <h1 class="h5 fw-bold text-dark mb-0">Khách hàng Đã Đặt Cọc</h1>
+            <p class="small text-secondary mb-0">Danh sách khách hàng đã chốt đơn thành công</p>
           </div>
         </div>
-        
-        <div class="flex items-center gap-4">
-          <div class="flex items-center gap-3">
-            <div class="text-right hidden sm:block">
-              <p class="text-sm font-bold text-gray-700">Admin</p>
-              <small class="text-gray-500">Quản trị viên</small>
-            </div>
-            <img src="https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff" alt="Admin" class="h-10 w-10 rounded-full border">
+        <div class="d-flex align-items-center gap-3">
+          <div class="text-end d-none d-sm-block">
+            <p class="fw-bold text-dark mb-0 small">Admin</p>
+            <small class="text-secondary">Quản trị viên</small>
           </div>
+          <img
+            src="https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff"
+            alt="Admin"
+            class="rounded-circle border"
+            style="width:40px;height:40px;object-fit:cover"
+          />
         </div>
       </header>
 
-      <div class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
-        <div v-if="loading" class="flex justify-center items-center h-64">
-           <i class="fas fa-circle-notch fa-spin text-4xl text-blue-600"></i>
+      <div class="admin-main-scroll p-4">
+
+        <!-- Search & Filter toolbar -->
+        <div class="d-flex flex-column flex-sm-row gap-3 mb-4">
+          <div class="position-relative flex-grow-1" style="max-width:320px">
+            <input v-model="search" type="text" class="form-control ps-5" placeholder="Tìm theo tên, SĐT, email...">
+            <i class="fas fa-search position-absolute text-secondary" style="left:14px;top:50%;transform:translateY(-50%)"></i>
+          </div>
+          <span class="badge bg-success-subtle text-success rounded-pill d-flex align-items-center px-3 fw-semibold">
+            <i class="fas fa-circle me-2" style="font-size:0.5rem"></i>{{ filteredList.length }} khách hàng
+          </span>
         </div>
 
-        <div v-else class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-              <thead class="bg-gray-50 text-gray-600 uppercase text-xs font-bold border-b">
+        <!-- Loading -->
+        <div v-if="loading" class="card border-0 shadow-sm rounded-4 d-flex align-items-center justify-content-center" style="min-height:300px">
+          <div class="spinner-border text-primary mb-3" role="status"></div>
+          <p class="text-secondary">Đang tải dữ liệu...</p>
+        </div>
+
+        <!-- Empty state -->
+        <div v-else-if="filteredList.length === 0" class="card border-0 shadow-sm rounded-4 text-center p-5">
+          <i class="fas fa-users-slash fa-3x text-secondary mb-3"></i>
+          <h5 class="fw-bold text-dark">Chưa có dữ liệu</h5>
+          <p class="text-secondary small mb-0">Không tìm thấy khách hàng phù hợp với bộ lọc hiện tại.</p>
+        </div>
+
+        <!-- Table -->
+        <div v-else class="card border-0 shadow-sm rounded-4 overflow-hidden">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
                 <tr>
-                  <th class="p-4">Thông tin khách hàng</th>
-                  <th class="p-4">Xe đã chọn</th>
-                  <th class="p-4">Showroom</th>
-                  <th class="p-4">Nhân viên phụ trách</th>
-                  <th class="p-4">Trạng thái</th>
-                  <th class="p-4 text-center">Hành động</th>
+                  <th class="px-4 py-3 small text-uppercase text-secondary fw-bold">Khách hàng</th>
+                  <th class="px-4 py-3 small text-uppercase text-secondary fw-bold">Xe đã chọn</th>
+                  <th class="px-4 py-3 small text-uppercase text-secondary fw-bold">Showroom</th>
+                  <th class="px-4 py-3 small text-uppercase text-secondary fw-bold">Nhân viên</th>
+                  <th class="px-4 py-3 small text-uppercase text-secondary fw-bold text-center">Trạng thái</th>
+                  <th class="px-4 py-3 small text-uppercase text-secondary fw-bold text-center">Hành động</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-100">
-                <tr v-for="customer in depositedCustomers" :key="customer.id" class="hover:bg-green-50 transition-colors">
-                  <td class="p-4">
-                    <div class="font-bold text-gray-800">{{ customer.customerName }}</div>
-                    <div class="text-sm text-blue-600 mt-1">
-                      <i class="fas fa-phone-alt text-xs mr-1"></i> {{ customer.phoneNumber }}
+              <tbody>
+                <tr v-for="customer in filteredList" :key="customer.id">
+                  <!-- Customer info -->
+                  <td class="px-4 py-3">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="customer-avatar">{{ getInitials(customer.customerName) }}</div>
+                      <div>
+                        <div class="fw-bold text-dark small">{{ customer.customerName || '—' }}</div>
+                        <a :href="`tel:${customer.phoneNumber}`" class="text-primary text-decoration-none small">
+                          <i class="fas fa-phone-alt me-1" style="font-size:0.65rem"></i>{{ customer.phoneNumber || '—' }}
+                        </a>
+                        <div class="text-secondary" style="font-size:0.72rem">{{ customer.email || '' }}</div>
+                      </div>
                     </div>
-                    <div class="text-xs text-gray-500 mt-1">{{ customer.email }}</div>
                   </td>
 
-                  <td class="p-4">
-                    <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold whitespace-nowrap">
+                  <!-- Car variant -->
+                  <td class="px-4 py-3">
+                    <span class="badge rounded-pill bg-primary-subtle text-primary fw-semibold">
                       {{ customer.carVariantName || 'N/A' }}
                     </span>
                   </td>
 
-                  <td class="p-4">
-                    <div class="font-medium text-gray-700 text-sm">
-                        <i class="fas fa-store text-red-500 mr-1"></i> 
-                        {{ customer.showroomName || 'Chưa xác định' }}
+                  <!-- Showroom -->
+                  <td class="px-4 py-3">
+                    <div class="small fw-semibold text-dark">
+                      <i class="fas fa-store text-danger me-1"></i>
+                      {{ customer.showroomName || 'Chưa xác định' }}
                     </div>
-                    <div class="text-xs text-gray-400 mt-1">{{ customer.province }}</div>
+                    <div class="text-secondary" style="font-size:0.72rem">{{ customer.province || '' }}</div>
                   </td>
 
-                  <td class="p-4">
-                    <div v-if="customer.staff" class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs border border-indigo-200">
-                            {{ getInitials(customer.staff.firstName, customer.staff.lastName) }}
-                        </div>
-                        <div>
-                            <div class="text-sm font-bold text-gray-800">
-                                {{ customer.staff.firstName }} {{ customer.staff.lastName }}
-                            </div>
-                            <div class="mt-0.5">
-                                <span :class="getRoleBadge(customer.staff.role)">
-                                    {{ customer.staff.role }}
-                                </span>
-                            </div>
-                        </div>
+                  <!-- Staff -->
+                  <td class="px-4 py-3">
+                    <div v-if="customer.staff" class="d-flex align-items-center gap-2">
+                      <div class="staff-avatar">{{ getInitials(customer.staff.firstName, customer.staff.lastName) }}</div>
+                      <div>
+                        <div class="fw-semibold text-dark small">{{ customer.staff.firstName }} {{ customer.staff.lastName }}</div>
+                        <span :class="getRoleBadge(customer.staff.role)" class="badge rounded-pill" style="font-size:0.62rem">
+                          {{ customer.staff.role }}
+                        </span>
+                      </div>
                     </div>
-                    <div v-else class="text-xs text-gray-400 italic bg-gray-50 px-2 py-1 rounded inline-block">
-                        <i class="fas fa-user-slash mr-1"></i> Chưa phân công
+                    <div v-else class="small text-secondary fst-italic">
+                      <i class="fas fa-user-slash me-1"></i>Chưa phân công
                     </div>
                   </td>
 
-                  <td class="p-4">
-                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200 whitespace-nowrap">
-                      {{ customer.status }}
+                  <!-- Status -->
+                  <td class="px-4 py-3 text-center">
+                    <span class="badge rounded-pill bg-success-subtle text-success fw-semibold">
+                      <i class="fas fa-check me-1" style="font-size:0.65rem"></i>
+                      {{ customer.status || 'Đã đặt cọc' }}
                     </span>
                   </td>
 
-                  <td class="p-4 text-center">
-                    <button @click="viewDetails(customer)" class="text-blue-600 hover:text-blue-800 font-bold text-sm bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200 transition-all">
-                      <i class="fas fa-file-contract mr-1"></i> Hợp đồng
+                  <!-- Action -->
+                  <td class="px-4 py-3 text-center">
+                    <button @click="viewDetails(customer)" class="btn btn-sm btn-primary fw-semibold rounded-pill px-3">
+                      <i class="fas fa-file-contract me-1"></i>Hợp đồng
                     </button>
-                  </td>
-                </tr>
-
-                <tr v-if="depositedCustomers.length === 0">
-                  <td colspan="6" class="p-12 text-center text-gray-500">
-                    <i class="fas fa-users-slash text-4xl mb-3 text-gray-300"></i>
-                    <p>Chưa có khách hàng nào đặt cọc.</p>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-        </div>
-      </div>
-    </main>
-
-    <div v-if="selectedCustomer" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden animate-fade-in">
-        <div class="p-6 border-b flex justify-between items-center bg-gray-50">
-          <div>
-              <h3 class="text-xl font-bold text-gray-800">Thông tin Hợp đồng</h3>
-              <p class="text-xs text-gray-500">Mã tham chiếu: #{{ selectedCustomer.id }}</p>
+          <div class="card-footer bg-white small text-secondary px-4 py-2 border-top">
+            Hiển thị {{ filteredList.length }} / {{ depositedCustomers.length }} khách hàng đặt cọc
           </div>
-          <button @click="selectedCustomer = null" class="text-gray-400 hover:text-gray-600 transition-colors">
-            <i class="fas fa-times text-2xl"></i>
-          </button>
-        </div>
-
-        <div class="p-6 overflow-y-auto max-h-[70vh]">
-          <div class="grid grid-cols-2 gap-6">
-              <div class="col-span-2 md:col-span-1 space-y-4">
-                  <h4 class="font-bold text-blue-700 border-b pb-2 uppercase text-xs">Bên mua xe (Khách hàng)</h4>
-                  
-                  <div>
-                      <label class="block text-xs font-bold text-gray-500 uppercase">Họ và tên</label>
-                      <p class="text-gray-800 font-medium text-lg">{{ selectedCustomer.customerName }}</p>
-                  </div>
-                  <div>
-                      <label class="block text-xs font-bold text-gray-500 uppercase">Số điện thoại</label>
-                      <p class="text-gray-800">{{ selectedCustomer.phoneNumber }}</p>
-                  </div>
-                  <div>
-                      <label class="block text-xs font-bold text-gray-500 uppercase">Email</label>
-                      <p class="text-gray-800">{{ selectedCustomer.email || 'Chưa cung cấp' }}</p>
-                  </div>
-              </div>
-
-              <div class="col-span-2 md:col-span-1 space-y-4">
-                  <h4 class="font-bold text-blue-700 border-b pb-2 uppercase text-xs">Thông tin Xe & Đại lý</h4>
-                  
-                  <div>
-                      <label class="block text-xs font-bold text-gray-500 uppercase">Dòng xe</label>
-                      <p class="text-red-600 font-bold text-lg">{{ selectedCustomer.carVariantName || 'Chưa chọn' }}</p>
-                  </div>
-                  <div>
-                      <label class="block text-xs font-bold text-gray-500 uppercase">Showroom</label>
-                      <p class="text-gray-800"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> {{ selectedCustomer.showroomName || 'Chưa xác định' }}</p>
-                  </div>
-              </div>
-
-              <div class="col-span-2 bg-gray-50 p-4 rounded-lg border border-gray-200 mt-2">
-                  <h4 class="font-bold text-gray-600 uppercase text-xs mb-3">Nhân viên thực hiện hợp đồng</h4>
-                  <div class="flex items-center gap-4" v-if="selectedCustomer.staff">
-                       <div class="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg shadow-md">
-                          {{ getInitials(selectedCustomer.staff.firstName, selectedCustomer.staff.lastName) }}
-                       </div>
-                       <div>
-                          <p class="font-bold text-gray-800 text-lg">{{ selectedCustomer.staff.firstName }} {{ selectedCustomer.staff.lastName }}</p>
-                          <span :class="getRoleBadge(selectedCustomer.staff.role)">{{ selectedCustomer.staff.role }}</span>
-                       </div>
-                  </div>
-                  <div v-else class="text-gray-500 italic text-sm">Chưa có nhân viên phụ trách</div>
-              </div>
-          </div>
-        </div>
-
-        <div class="p-5 border-t bg-gray-50 flex justify-end gap-3">
-          <button @click="selectedCustomer = null" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-100 transition-all shadow-sm">
-            Đóng
-          </button>
-          <button class="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-md transition-all flex items-center gap-2">
-            <i class="fas fa-print"></i> Xuất file PDF
-          </button>
         </div>
       </div>
     </div>
 
+    <!-- Modal Chi tiết - dùng Teleport để tránh bị sidebar che -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="selectedCustomer" class="contract-modal-overlay" @click.self="selectedCustomer = null">
+          <div class="contract-modal-dialog animate-pop">
+
+            <!-- Header -->
+            <div class="contract-modal-header">
+              <div>
+                <h5 class="fw-bold text-dark mb-0">Thông tin Hợp đồng</h5>
+                <small class="text-secondary">Mã tham chiếu: #{{ selectedCustomer.id }}</small>
+              </div>
+              <button @click="selectedCustomer = null" class="btn-close"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="contract-modal-body">
+              <div class="row g-4">
+                <!-- Buyer -->
+                <div class="col-12 col-md-6">
+                  <div class="contract-section">
+                    <div class="contract-section-label text-primary">
+                      <i class="fas fa-user-circle me-1"></i> Bên mua xe (Khách hàng)
+                    </div>
+                    <div class="contract-field">
+                      <label>Họ và tên</label>
+                      <p class="fw-bold text-dark fs-6">{{ selectedCustomer.customerName }}</p>
+                    </div>
+                    <div class="contract-field">
+                      <label>Số điện thoại</label>
+                      <p>{{ selectedCustomer.phoneNumber }}</p>
+                    </div>
+                    <div class="contract-field">
+                      <label>Email</label>
+                      <p>{{ selectedCustomer.email || 'Chưa cung cấp' }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Car & Dealer -->
+                <div class="col-12 col-md-6">
+                  <div class="contract-section">
+                    <div class="contract-section-label text-primary">
+                      <i class="fas fa-car me-1"></i> Thông tin Xe & Đại lý
+                    </div>
+                    <div class="contract-field">
+                      <label>Dòng xe</label>
+                      <p class="fw-bold text-danger fs-6">{{ selectedCustomer.carVariantName || 'Chưa chọn' }}</p>
+                    </div>
+                    <div class="contract-field">
+                      <label>Showroom</label>
+                      <p><i class="fas fa-map-marker-alt text-danger me-1"></i>{{ selectedCustomer.showroomName || 'Chưa xác định' }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Staff -->
+                <div class="col-12">
+                  <div class="contract-section">
+                    <div class="contract-section-label text-primary">
+                      <i class="fas fa-user-tie me-1"></i> Nhân viên thực hiện hợp đồng
+                    </div>
+                    <div v-if="selectedCustomer.staff" class="d-flex align-items-center gap-3 mt-2">
+                      <div class="staff-avatar-lg">
+                        {{ getInitials(selectedCustomer.staff.firstName, selectedCustomer.staff.lastName) }}
+                      </div>
+                      <div>
+                        <p class="fw-bold text-dark fs-6 mb-1">{{ selectedCustomer.staff.firstName }} {{ selectedCustomer.staff.lastName }}</p>
+                        <span :class="getRoleBadge(selectedCustomer.staff.role)" class="badge rounded-pill">
+                          {{ selectedCustomer.staff.role }}
+                        </span>
+                      </div>
+                    </div>
+                    <p v-else class="text-secondary fst-italic small">Chưa có nhân viên phụ trách</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="contract-modal-footer">
+              <button @click="selectedCustomer = null" class="btn btn-outline-secondary fw-semibold px-4">
+                Đóng
+              </button>
+              <button class="btn btn-primary fw-bold px-4 shadow-sm">
+                <i class="fas fa-print me-2"></i>Xuất PDF
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import AdminSidebar from '@/components/AdminSidebar.vue'
 
 const isSidebarOpen = ref(false)
 const allConsultations = ref([])
 const loading = ref(true)
-const selectedCustomer = ref(null) // State để lưu khách hàng đang xem chi tiết
+const selectedCustomer = ref(null)
+const search = ref('')
 
-// Dữ liệu lọc: Chỉ lấy khách đã đặt cọc
-const depositedCustomers = computed(() => {
-  return allConsultations.value.filter(item => 
-    item.status === 'Đã đặt cọc' || 
-    item.status === 'PAID' || 
-    item.status === 'APPROVED'
+const depositedCustomers = computed(() =>
+  allConsultations.value.filter(item =>
+    ['Đã đặt cọc', 'PAID', 'APPROVED'].includes(item.status)
+  )
+)
+
+const filteredList = computed(() => {
+  if (!search.value.trim()) return depositedCustomers.value
+  const term = search.value.toLowerCase()
+  return depositedCustomers.value.filter(c =>
+    (c.customerName ?? '').toLowerCase().includes(term) ||
+    (c.phoneNumber ?? '').includes(term) ||
+    (c.email ?? '').toLowerCase().includes(term) ||
+    (c.carVariantName ?? '').toLowerCase().includes(term)
   )
 })
 
 const fetchCustomers = async () => {
   try {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('authToken')
     const response = await fetch('http://localhost:8080/api/customers-with-staff', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    const data = await response.json();
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const data = await response.json()
     if (data.code === 1000) {
-      allConsultations.value = data.result;
+      allConsultations.value = data.result ?? []
     }
   } catch (error) {
-    console.error("Lỗi khi tải danh sách khách hàng:", error);
+    console.error('Lỗi tải danh sách khách hàng:', error)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
-const getInitials = (first, last) => {
-    const f = first ? first.charAt(0) : '';
-    const l = last ? last.charAt(0) : '';
-    return (f + l).toUpperCase();
+// FIX: support single name string OR (firstName, lastName) args
+const getInitials = (firstOrFull, last) => {
+  if (last !== undefined) {
+    // Called with (firstName, lastName)
+    return ((firstOrFull?.charAt(0) ?? '') + (last?.charAt(0) ?? '')).toUpperCase() || '?'
+  }
+  // Called with full name
+  const parts = (firstOrFull ?? '').trim().split(' ')
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase() || '?'
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
 }
 
 const getRoleBadge = (role) => {
-    switch (role) {
-        case 'ADMIN': 
-            return 'bg-red-100 text-red-700 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border border-red-200';
-        case 'MANAGER': 
-            return 'bg-purple-100 text-purple-700 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border border-purple-200';
-        case 'STAFF': 
-            return 'bg-blue-100 text-blue-700 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border border-blue-200';
-        default: 
-            return 'bg-gray-100 text-gray-600 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border border-gray-200';
-    }
+  switch (role) {
+    case 'ADMIN': return 'bg-danger-subtle text-danger'
+    case 'MANAGER': return 'bg-purple-subtle text-purple'
+    case 'STAFF': return 'bg-primary-subtle text-primary'
+    default: return 'bg-secondary-subtle text-secondary'
+  }
 }
 
-// Hàm mở Modal chi tiết
-const viewDetails = (customer) => {
-  selectedCustomer.value = customer;
-}
+const viewDetails = (customer) => { selectedCustomer.value = customer }
 
-onMounted(() => {
-  fetchCustomers();
-})
+onMounted(fetchCustomers)
 </script>
 
 <style scoped>
-.animate-fade-in {
-  animation: fadeIn 0.2s ease-out;
+.admin-page-wrapper { display: flex; height: 100vh; background: #f1f5f9; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; }
+.admin-content-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.admin-topbar { height: 68px; background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,0.07); display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; flex-shrink: 0; z-index: 10; }
+.admin-main-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; }
+
+.customer-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
 }
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+
+.staff-avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
 }
+
+.staff-avatar-lg {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(29,78,216,0.3);
+}
+
+/* ===== MODAL ===== */
+.contract-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1055;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.contract-modal-dialog {
+  background: #fff;
+  border-radius: 1rem;
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+
+.contract-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.contract-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.contract-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  background: #f8fafc;
+  flex-shrink: 0;
+}
+
+.contract-section {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  height: 100%;
+}
+
+.contract-section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.contract-field label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+.contract-field p {
+  color: #374151;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+/* Transitions */
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.25s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.94) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.animate-pop { animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+.table th { font-size: 0.72rem; }
+.table td { font-size: 0.88rem; }
 </style>

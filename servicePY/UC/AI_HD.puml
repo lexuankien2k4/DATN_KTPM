@@ -1,0 +1,28 @@
+@startuml
+skinparam Style strictuml
+skinparam conditionStyle inside
+
+start
+
+:Mở chức năng "Tư vấn cùng AI";
+:Trợ lý ảo gửi lời chào và câu hỏi gợi ý;
+
+repeat
+  :Khách hàng nhập nội dung trả lời/câu hỏi;
+  :Hệ thống phân tích nhu cầu người dùng;
+  
+  if (Thông tin đầu vào đã đầy đủ?) then (Chưa)
+    :AI gửi yêu cầu làm rõ thêm nhu cầu;
+    ' Thay thế backward bằng luồng trực tiếp để tránh lỗi compiler
+  else (Có)
+    :Truy vấn danh mục xe phù hợp (CarModel);
+    :So khớp chi tiết thông số (CarVariant);
+    :Đưa ra danh sách xe tối ưu & lời giải thích;
+  endif
+
+repeat while (Khách hàng muốn tiếp tục tư vấn?) is (Có)
+
+->Không;
+:Kết thúc phiên tư vấn;
+stop
+@enduml

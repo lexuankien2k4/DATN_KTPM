@@ -1,0 +1,76 @@
+@startuml
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+
+actor "Quản lý" as Admin
+boundary "GDQuanLyOto : Boundary" as UI
+control "CarControl : Control" as Controller
+control "CarVariantControl : Control" as VariantRepo
+control "CarStockControl : Control" as StockRepo
+entity "CarVariant : Entity" as Variant
+entity "CarStock : Entity" as Stock
+
+title Biểu đồ trình tự: Use Case Quản lý Ô tô
+
+
+
+Admin -> UI: 1. Mở mục "Danh sách ô tô"
+activate UI
+    UI -> Controller: 2. yêu cầu dữ liệu khởi tạo
+    activate Controller
+        Controller -> VariantRepo: 3. findAllActiveVariants()
+        activate VariantRepo
+            VariantRepo -> Variant: 4. getInfo()
+            activate Variant
+            Variant --> VariantRepo: 5. trả về thông tin (Tên, Giá, Pin, Chỗ ngồi)
+            deactivate Variant
+        VariantRepo --> Controller: 6. trả về danh sách biến thể
+        deactivate VariantRepo
+        Controller --> UI: 7. Hiển thị danh sách xe lên bảng điều khiển
+    deactivate Controller
+deactivate UI
+
+Admin -> UI: 8. Chọn một biến thể cụ thể
+activate UI
+    UI -> Controller: 9. getVariantDetails(variantId)
+    activate Controller
+        Controller -> StockRepo: 10. findByVariantId(variantId)
+        activate StockRepo
+            StockRepo -> Stock: 11. getVinList()
+            activate Stock
+            Stock --> StockRepo: 12. trả về danh sách số khung (VIN)
+            deactivate Stock
+        StockRepo --> Controller: 13. trả về dữ liệu kho chi tiết
+        deactivate StockRepo
+        Controller --> UI: 14. Cập nhật giá, hình ảnh và danh sách xe trong kho
+    deactivate Controller
+deactivate UI
+
+Admin -> UI: 15. Nhập thông tin xe mới và nhấn "Lưu"
+activate UI
+    UI -> Controller: 16. createNewVariant(variantData)
+    activate Controller
+        Controller -> VariantRepo: 17. save(variantData)
+        activate VariantRepo
+            VariantRepo -> Variant: 18. validateAndPersist()
+            Variant --> VariantRepo: 19. xác nhận lưu thành công
+        deactivate VariantRepo
+        Controller --> UI: 20. Hiển thị thông báo "Thêm xe thành công"
+    deactivate Controller
+    UI --> Admin: 21. Cập nhật lại bảng danh sách
+deactivate UI
+
+Admin -> UI: 22. Thay đổi trạng thái xe (Ví dụ: Nhập kho/Đã bán)
+activate UI
+    UI -> Controller: 23. updateStockStatus(vinNumber, status)
+    activate Controller
+        Controller -> StockRepo: 24. updateStatus(vinNumber, status)
+        activate StockRepo
+            StockRepo -> Stock: 25. setStatus()
+            Stock --> StockRepo: 26. trả về trạng thái mới
+        deactivate StockRepo
+        Controller --> UI: 27. Phản hồi cập nhật kho hoàn tất
+    deactivate Controller
+deactivate UI
+
+@enduml

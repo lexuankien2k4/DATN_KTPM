@@ -1,0 +1,47 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam style strictuml
+skinparam packageStyle rectangle
+
+
+    class User {
+        - Long id
+        - String fullName
+        - String role
+        --
+        + getFullName(): String
+    }
+
+    class CarStock {
+        - Long id
+        - String vinNumber <<Unique>>
+        - LocalDateTime importDate
+        - StockStatus status
+        --
+        + setStatus(status: StockStatus): void
+        + updatePDI(): void
+    }
+
+    class Contract {
+        - Long id
+        - String vinNumber
+        - String status
+        --
+        + assignVIN(vin: String): void
+    }
+
+    enum StockStatus {
+        IN_STOCK
+        RESERVED
+        PDI_PENDING
+        DELIVERED
+        DEFECTIVE
+    }
+
+
+' Relationships
+User "1" -- "0..*" CarStock : "quản lý bãi"
+CarStock "0..1" -- "0..1" Contract : "gán theo"
+CarStock ..> StockStatus : "sử dụng"
+
+@enduml

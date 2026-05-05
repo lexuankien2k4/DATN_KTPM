@@ -1,6 +1,6 @@
 package com.Nhom7.DACN_KTPM.controller;
 
-import com.Nhom7.DACN_KTPM.dto.request.ApiResponse;
+import com.Nhom7.DACN_KTPM.dto.request.ApiRequest;
 import com.Nhom7.DACN_KTPM.dto.request.CarModelCreationRequest;
 import com.Nhom7.DACN_KTPM.dto.request.CarModelUpdateRequest;
 import com.Nhom7.DACN_KTPM.dto.response.CarModelResponse;
@@ -24,25 +24,25 @@ public class CarModelController {
     CarModelService carModelService;
 
     @GetMapping
-    ApiResponse<List<CarModelResponse>> getAllModels() {
+    ApiRequest<List<CarModelResponse>> getAllModels() {
         log.info("Request to get ALL car models");
-        return ApiResponse.<List<CarModelResponse>>builder()
+        return ApiRequest.<List<CarModelResponse>>builder()
                 .result(carModelService.getAllCarModel())
                 .build();
     }
 
     @GetMapping("/active")
-    ApiResponse<List<CarModelResponse>> getAllActiveModels() {
+    ApiRequest<List<CarModelResponse>> getAllActiveModels() {
         log.info("Request to get all active car models");
-        return ApiResponse.<List<CarModelResponse>>builder()
+        return ApiRequest.<List<CarModelResponse>>builder()
                 .result(carModelService.getActiveCarModels()) // Lưu ý: Hàm này trong Service phải có
                 .build();
     }
 
     @PostMapping
-    ApiResponse<CarModelResponse> createModel(@RequestBody @Valid CarModelCreationRequest request) {
+    ApiRequest<CarModelResponse> createModel(@RequestBody @Valid CarModelCreationRequest request) {
         log.info("Request to create car model: {}", request.getName());
-        return ApiResponse.<CarModelResponse>builder()
+        return ApiRequest.<CarModelResponse>builder()
                 .result(carModelService.createCarModel(request))
                 .message("Car model created successfully")
                 .build();
@@ -50,18 +50,18 @@ public class CarModelController {
 
 
     @GetMapping("/{id}")
-    ApiResponse<CarModelResponse> getModelById(@PathVariable Long id) {
+    ApiRequest<CarModelResponse> getModelById(@PathVariable Long id) {
         log.info("Request to get car model by ID: {}", id);
-        return ApiResponse.<CarModelResponse>builder()
+        return ApiRequest.<CarModelResponse>builder()
                 .result(carModelService.getCarModel(id))
                 .build();
     }
 
 
     @PutMapping("/{id}")
-    ApiResponse<CarModelResponse> updateModel(@PathVariable Long id, @RequestBody @Valid CarModelUpdateRequest request) {
+    ApiRequest<CarModelResponse> updateModel(@PathVariable Long id, @RequestBody @Valid CarModelUpdateRequest request) {
         log.info("Request to update car model ID: {}", id);
-        return ApiResponse.<CarModelResponse>builder()
+        return ApiRequest.<CarModelResponse>builder()
                 .result(carModelService.updateCarModel(id, request))
                 .message("Car model updated successfully")
                 .build();
@@ -69,10 +69,10 @@ public class CarModelController {
 
 
     @DeleteMapping("/{id}")
-    ApiResponse<String> deleteModel(@PathVariable Long id) {
+    ApiRequest<String> deleteModel(@PathVariable Long id) {
         log.info("Request to delete car model ID: {}", id);
         carModelService.deleteCarModel(id);
-        return ApiResponse.<String>builder()
+        return ApiRequest.<String>builder()
                 .result("Dòng xe đã được xóa thành công")
                 .build();
     }

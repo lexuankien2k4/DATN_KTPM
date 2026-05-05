@@ -1,0 +1,31 @@
+@startuml
+skinparam style strictuml
+skinparam ConditionEndStyle hline
+
+title Biểu đồ hoạt động: Đăng ký lái thử (Dành cho Khách hàng)
+
+start
+:Truy cập mục "Đăng ký lái thử";
+
+    :Chọn mẫu xe muốn lái thử;
+    :Chọn Tỉnh thành & Showroom;
+    :Chọn ngày và khung giờ hẹn;
+
+
+    repeat
+        :Cung cấp thông tin (Họ tên, SĐT, Email);
+        :Kiểm tra lại thông tin;
+        :Nhấn "Gửi yêu cầu lái thử";
+        
+        if (Thông tin đầy đủ và hợp lệ?) then (Đúng)
+            :Hệ thống ghi nhận yêu cầu;
+            :Hiển thị thông báo thành công;
+            detach
+        else (Sai)
+            :Hiển thị lỗi nhập liệu;
+        endif
+    repeat while (Khách hàng muốn sửa lại?) is (Có)
+
+
+stop
+@enduml

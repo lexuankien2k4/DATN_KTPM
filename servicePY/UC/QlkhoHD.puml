@@ -1,0 +1,55 @@
+@startuml
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+
+actor "Quản lý" as Admin
+boundary "GDQuanLyKho : Boundary" as UI
+control "ConsulationController : Control" as Controller
+entity "CarStock : Entity" as Stock
+entity "Contract : Entity" as Contract
+
+
+
+Admin -> UI: 1. Nhập danh sách xe mới
+activate UI
+    UI -> Controller: 2. importNewStock(data)
+    activate Controller
+        Controller -> Controller: 3. checkUniqueVIN()
+        Controller -> Stock: 4. save(IN_STOCK, importDate)
+        Controller --> UI: 5. Thông báo thành công
+    deactivate Controller
+deactivate UI
+
+[-> Controller: 6. notifyPaymentSuccess()
+activate Controller
+    Controller -> Controller: 7. [Start Transaction]
+    Controller -> Stock: 8. findOldestAvailable()
+    activate Stock
+        Stock --> Controller: 9. Trả về thông tin xe
+    deactivate Stock
+    
+    Controller -> Stock: 10. setStatus(RESERVED)
+    Controller -> Contract: 11. assignVIN(vinNumber)
+    Controller -> Controller: 12. [Commit Transaction]
+    ' Không có UI trả về trực tiếp ở bước này vì đây là luồng tự động hệ thống
+deactivate Controller
+
+Admin -> UI: 13. Chọn "Bắt đầu PDI"
+activate UI
+    UI -> Controller: 14. startPDI(vin)
+    activate Controller
+        Controller -> Stock: 15. setStatus(PDI_PENDING)
+        Controller --> UI: 16. Phản hồi thành công
+    deactivate Controller
+deactivate UI
+
+Admin -> UI: 17. Xác nhận "Bàn giao xe"
+activate UI
+    UI -> Controller: 18. confirmDelivery(vin)
+    activate Controller
+        Controller -> Stock: 19. setStatus(DELIVERED)
+        Controller --> UI: 20. Thông báo hoàn tất
+    deactivate Controller
+deactivate UI
+
+@enduml

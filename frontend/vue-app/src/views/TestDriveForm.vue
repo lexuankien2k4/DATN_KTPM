@@ -1,160 +1,198 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-6xl rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
-      
-      <div class="w-full md:w-1/2 bg-gray-100 relative flex items-center justify-center p-6">
-        <img 
-          src="https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw906c2893/images/pdp-vfe34/iris-vfe34.png" 
-          alt="VinFast Car" 
-          class="w-full h-auto object-contain hover:scale-105 transition-transform duration-500"
-        >
+  <div class="testdrive-root">
+    <!-- Left: Hero image panel -->
+    <div class="td-hero d-none d-md-flex">
+      <div class="td-hero-overlay"></div>
+      <img
+        src="https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw906c2893/images/pdp-vfe34/iris-vfe34.png"
+        alt="VinFast Car"
+        class="td-hero-car"
+      />
+      <div class="td-hero-text">
+        <span class="td-hero-badge">TRẢI NGHIỆM THỰC TẾ</span>
+        <h2 class="td-hero-title">Lái thử xe<br>VinFast miễn phí</h2>
+        <p class="td-hero-sub">Đặt lịch ngay hôm nay, trải nghiệm cảm giác lái đỉnh cao tại showroom gần bạn nhất.</p>
+        <div class="td-hero-stats">
+          <div><strong>63+</strong><span>Tỉnh thành</span></div>
+          <div><strong>150+</strong><span>Showroom</span></div>
+          <div><strong>10K+</strong><span>Lái thử</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Form -->
+    <div class="td-form-panel">
+      <div class="td-form-wrap">
+        <!-- Tab -->
+        <div class="d-flex border-bottom mb-4">
+          <button
+            v-for="tab in tabs" :key="tab.id"
+            @click="activeTab = tab.id"
+            :class="['tab-btn flex-fill py-3', activeTab === tab.id ? 'tab-btn--active' : '']"
+          >
+            <i :class="['me-2', tab.icon]"></i>{{ tab.label }}
+          </button>
         </div>
 
-      <div class="w-full md:w-1/2 p-8 md:p-12">
-        
-        <h2 class="text-2xl font-bold text-center text-gray-800 mb-2 uppercase tracking-wide">ĐĂNG KÝ LÁI THỬ</h2>
-        <p class="text-center text-sm text-gray-500 mb-6">
-          Để đăng ký lái thử, Quý khách cần cung cấp giấy phép lái xe cho VinFast
-        </p>
-
-        <div class="flex border-b border-gray-200 mb-6">
-          <button 
-            class="w-1/2 py-3 text-center font-semibold text-blue-600 border-b-2 border-blue-600 focus:outline-none"
-          >
-            Xe ô tô
-          </button>
-          <button 
-            class="w-1/2 py-3 text-center font-medium text-gray-500 hover:text-gray-700 focus:outline-none"
-          >
-            Xe máy điện
-          </button>
+        <div class="mb-4">
+          <h4 class="fw-bold text-dark mb-1">Đăng Ký Lái Thử</h4>
+          <p class="text-secondary small mb-0">Để đăng ký lái thử, Quý khách cần cung cấp giấy phép lái xe cho VinFast.</p>
         </div>
 
-        <form @submit.prevent="submitForm" class="space-y-6">
-          
-          <div>
-            <h3 class="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">Thông tin khách hàng</h3>
-            <div class="space-y-4">
-              <div class="relative">
-                <input 
-                  type="text" 
-                  v-model="form.customerName" 
-                  placeholder="Họ và tên Quý khách *" 
-                  class="w-full border-b border-gray-300 py-2 focus:border-blue-600 focus:outline-none transition-colors placeholder-gray-400"
-                  required
-                >
+        <form @submit.prevent="submitForm" novalidate>
+          <!-- Customer info -->
+          <div class="form-section mb-4">
+            <div class="form-section-label">Thông tin khách hàng</div>
+            <div class="row g-3">
+              <div class="col-12">
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="fas fa-user text-secondary small"></i></span>
+                  <input
+                    v-model.trim="form.customerName"
+                    type="text"
+                    class="form-control bg-light border-start-0"
+                    placeholder="Họ và tên Quý khách *"
+                    required
+                  />
+                </div>
               </div>
-              
-              <div class="grid grid-cols-2 gap-4">
-                <input 
-                  type="tel" 
-                  v-model="form.phoneNumber" 
-                  placeholder="Số điện thoại *" 
-                  class="w-full border-b border-gray-300 py-2 focus:border-blue-600 focus:outline-none transition-colors placeholder-gray-400"
-                  required
-                >
-                <input 
-                  type="email" 
-                  v-model="form.email" 
-                  placeholder="Email *" 
-                  class="w-full border-b border-gray-300 py-2 focus:border-blue-600 focus:outline-none transition-colors placeholder-gray-400"
-                  required
-                >
+              <div class="col-12 col-sm-6">
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="fas fa-phone text-secondary small"></i></span>
+                  <input
+                    v-model.trim="form.phoneNumber"
+                    type="tel"
+                    class="form-control bg-light border-start-0"
+                    placeholder="Số điện thoại *"
+                    required
+                    pattern="[0-9]{10,11}"
+                  />
+                </div>
+              </div>
+              <div class="col-12 col-sm-6">
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="fas fa-envelope text-secondary small"></i></span>
+                  <input
+                    v-model.trim="form.email"
+                    type="email"
+                    class="form-control bg-light border-start-0"
+                    placeholder="Email *"
+                    required
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          <div>
-            <h3 class="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">Lựa chọn mẫu xe</h3>
-            <div class="relative">
-              <select 
-                v-model="form.variantId" 
-                class="w-full border-b border-gray-300 py-2 bg-white focus:border-blue-600 focus:outline-none text-gray-700 appearance-none cursor-pointer"
+          <!-- Car selection -->
+          <div class="form-section mb-4">
+            <div class="form-section-label">Lựa chọn mẫu xe</div>
+            <div class="position-relative">
+              <select
+                v-model="form.variantId"
+                class="form-select bg-light"
                 required
               >
                 <option :value="null" disabled>Chọn mẫu xe *</option>
-                <option v-for="car in carVariants" :key="car.id" :value="car.id">
-                  {{ car.name }}
-                </option>
+                <option v-for="car in carVariants" :key="car.id" :value="car.id">{{ car.name }}</option>
               </select>
-              <div class="absolute right-0 top-3 pointer-events-none">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
+
+          <!-- Schedule -->
+          <div class="form-section mb-4">
+            <div class="form-section-label">Lựa chọn thời gian</div>
+            <div class="row g-3">
+              <div class="col-12 col-sm-6">
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="fas fa-calendar text-secondary small"></i></span>
+                  <input
+                    v-model="form.scheduleDate"
+                    type="date"
+                    class="form-control bg-light border-start-0"
+                    required
+                    :min="todayStr"
+                  />
+                </div>
+              </div>
+              <div class="col-12 col-sm-6">
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="fas fa-clock text-secondary small"></i></span>
+                  <input
+                    v-model="form.scheduleTime"
+                    type="time"
+                    class="form-control bg-light border-start-0"
+                    required
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          <div>
-            <h3 class="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">Lựa chọn thời gian</h3>
-            <div class="grid grid-cols-2 gap-4">
-              <div class="relative">
-                <input 
-                  type="date" 
-                  v-model="form.scheduleDate" 
-                  class="w-full border-b border-gray-300 py-2 focus:border-blue-600 focus:outline-none text-gray-700"
-                  required
-                  :min="todayStr"
-                >
+          <!-- Location -->
+          <div class="form-section mb-4">
+            <div class="form-section-label">Lựa chọn địa điểm</div>
+            <div class="row g-3">
+              <div class="col-12">
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="fas fa-map-pin text-secondary small"></i></span>
+                  <select
+                    v-model="selectedProvince"
+                    class="form-select bg-light border-start-0"
+                    required
+                  >
+                    <option :value="null" disabled>Tỉnh / Thành phố *</option>
+                    <option v-for="prov in provinces" :key="prov" :value="prov">{{ prov }}</option>
+                  </select>
+                </div>
               </div>
-              <div class="relative">
-                <input 
-                  type="time" 
-                  v-model="form.scheduleTime" 
-                  class="w-full border-b border-gray-300 py-2 focus:border-blue-600 focus:outline-none text-gray-700"
-                  required
-                >
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 class="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">Lựa chọn địa điểm</h3>
-            <div class="space-y-4">
-              <div class="relative">
-                <select 
-                  v-model="selectedProvince" 
-                  class="w-full border-b border-gray-300 py-2 bg-white focus:border-blue-600 focus:outline-none text-gray-700 appearance-none cursor-pointer"
-                  required
-                >
-                  <option :value="null" disabled>Tỉnh thành *</option>
-                  <option v-for="prov in provinces" :key="prov" :value="prov">{{ prov }}</option>
-                </select>
-                <div class="absolute right-0 top-3 pointer-events-none"><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></div>
-              </div>
-
-              <div class="relative">
-                <select 
-                  v-model="selectedShowroom" 
-                  :disabled="!selectedProvince"
-                  class="w-full border-b border-gray-300 py-2 bg-white focus:border-blue-600 focus:outline-none text-gray-700 appearance-none cursor-pointer disabled:bg-gray-50 disabled:text-gray-400"
-                  required
-                >
-                  <option :value="null" disabled>Showroom / Địa chỉ chi tiết *</option>
-                  <option v-for="room in showrooms" :key="room.id" :value="room">
-                    {{ room.name }} - {{ room.address }}
-                  </option>
-                </select>
-                <div class="absolute right-0 top-3 pointer-events-none"><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></div>
+              <div class="col-12">
+                <div class="input-group">
+                  <span class="input-group-text bg-light border-end-0"><i class="fas fa-store text-secondary small"></i></span>
+                  <select
+                    v-model="selectedShowroom"
+                    :disabled="!selectedProvince || isLoadingShowrooms"
+                    class="form-select bg-light border-start-0"
+                    required
+                  >
+                    <option :value="null" disabled>
+                      {{ isLoadingShowrooms ? 'Đang tải...' : 'Showroom / Chi nhánh *' }}
+                    </option>
+                    <option v-for="room in showrooms" :key="room.id" :value="room">
+                      {{ room.name }} – {{ room.address }}
+                    </option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
 
-          <div v-if="statusMsg.text" :class="`text-sm p-3 rounded ${statusMsg.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`">
-            {{ statusMsg.text }}
-          </div>
-
-          <div class="pt-4">
-            <button 
-              type="submit" 
-              :disabled="isSubmitting"
-              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded shadow-lg hover:shadow-xl transition-all uppercase tracking-widest flex justify-center items-center"
+          <!-- Status message -->
+          <Transition name="slide-down">
+            <div
+              v-if="statusMsg.text"
+              :class="['alert d-flex align-items-center gap-2 py-2 mb-3', statusMsg.success ? 'alert-success' : 'alert-danger']"
+              role="alert"
             >
-              <span v-if="isSubmitting" class="mr-2">
-                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-              </span>
-              {{ isSubmitting ? 'ĐANG GỬI...' : 'ĐĂNG KÝ LÁI THỬ' }}
-            </button>
-          </div>
+              <i :class="['fas flex-shrink-0', statusMsg.success ? 'fa-check-circle' : 'fa-times-circle']"></i>
+              <small>{{ statusMsg.text }}</small>
+            </div>
+          </Transition>
 
+          <!-- Submit -->
+          <button
+            type="submit"
+            :disabled="isSubmitting"
+            class="btn btn-primary btn-lg w-100 fw-bold shadow-sm text-uppercase ls-wide"
+          >
+            <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
+            <i v-else class="fas fa-car-side me-2"></i>
+            {{ isSubmitting ? 'Đang gửi...' : 'Đăng ký lái thử' }}
+          </button>
+
+          <p class="text-center text-secondary mt-3 mb-0" style="font-size:0.72rem">
+            <i class="fas fa-shield-alt me-1"></i>Thông tin của bạn được bảo mật hoàn toàn.
+          </p>
         </form>
       </div>
     </div>
@@ -162,21 +200,25 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch, computed } from 'vue';
-import axios from 'axios';
+import { ref, reactive, onMounted, watch, computed } from 'vue'
+import axios from 'axios'
 
-// --- CẤU HÌNH API ---
-const API_URL = 'http://localhost:8080/api';
+const API_URL = 'http://localhost:8080/api'
 
-// --- DATA STATE ---
-const provinces = ref([]);
-const showrooms = ref([]);
-const carVariants = ref([]); // Danh sách xe để khách chọn
+const tabs = [
+  { id: 'car', label: 'Xe ô tô', icon: 'fas fa-car' },
+  { id: 'ebike', label: 'Xe máy điện', icon: 'fas fa-motorcycle' },
+]
+const activeTab = ref('car')
 
-const selectedProvince = ref(null);
-const selectedShowroom = ref(null);
-const isSubmitting = ref(false);
-const statusMsg = reactive({ text: '', success: false });
+const provinces = ref([])
+const showrooms = ref([])
+const carVariants = ref([])
+const selectedProvince = ref(null)
+const selectedShowroom = ref(null)
+const isSubmitting = ref(false)
+const isLoadingShowrooms = ref(false)
+const statusMsg = reactive({ text: '', success: false })
 
 const form = reactive({
   customerName: '',
@@ -184,49 +226,57 @@ const form = reactive({
   email: '',
   variantId: null,
   scheduleDate: '',
-  scheduleTime: ''
-});
+  scheduleTime: '',
+})
 
-const todayStr = computed(() => new Date().toISOString().split('T')[0]);
-
-// --- FETCH DATA ---
+const todayStr = computed(() => new Date().toISOString().split('T')[0])
 
 onMounted(async () => {
   try {
-    // 1. Load danh sách Tỉnh
-    const provRes = await axios.get(`${API_URL}/showrooms/provinces`);
-    provinces.value = provRes.data.result;
-
-    // 2. Load danh sách Xe (Giả định bạn có API này, nếu chưa thì phải tạo)
-    // Ví dụ: GET /api/cars/variants
-    const carRes = await axios.get(`${API_URL}/cars/variants`); 
-    carVariants.value = carRes.data.result; 
+    const [provRes, carRes] = await Promise.all([
+      axios.get(`${API_URL}/showrooms/provinces`),
+      axios.get(`${API_URL}/cars/variants`),
+    ])
+    provinces.value = provRes.data.result ?? []
+    carVariants.value = carRes.data.result ?? []
   } catch (e) {
-    console.error("Lỗi tải dữ liệu ban đầu:", e);
+    console.error('Lỗi tải dữ liệu ban đầu:', e)
   }
-});
+})
 
-// Khi chọn Tỉnh -> Load Showroom
 watch(selectedProvince, async (newVal) => {
-  showrooms.value = [];
-  selectedShowroom.value = null;
-  if (newVal) {
-    try {
-      const res = await axios.get(`${API_URL}/showrooms`, { params: { province: newVal } });
-      showrooms.value = res.data.result;
-    } catch (e) { console.error(e); }
-  }
-});
-
-// --- SUBMIT FORM ---
-const submitForm = async () => {
-  statusMsg.text = '';
-  isSubmitting.value = true;
-
+  showrooms.value = []
+  selectedShowroom.value = null
+  if (!newVal) return
+  isLoadingShowrooms.value = true
   try {
-    // Ghép ngày giờ
-    const scheduledAt = `${form.scheduleDate}T${form.scheduleTime}:00`;
+    const res = await axios.get(`${API_URL}/showrooms`, { params: { province: newVal } })
+    showrooms.value = res.data.result ?? []
+  } catch (e) {
+    console.error('Lỗi tải showroom:', e)
+  } finally {
+    isLoadingShowrooms.value = false
+  }
+})
 
+const submitForm = async () => {
+  statusMsg.text = ''
+
+  // FIX: validate phone client-side
+  if (!/^\d{10,11}$/.test(form.phoneNumber)) {
+    statusMsg.success = false
+    statusMsg.text = 'Số điện thoại không hợp lệ (10-11 chữ số).'
+    return
+  }
+  if (!selectedShowroom.value) {
+    statusMsg.success = false
+    statusMsg.text = 'Vui lòng chọn showroom.'
+    return
+  }
+
+  isSubmitting.value = true
+  try {
+    const scheduledAt = `${form.scheduleDate}T${form.scheduleTime}:00`
     const payload = {
       customerName: form.customerName,
       phoneNumber: form.phoneNumber,
@@ -234,40 +284,178 @@ const submitForm = async () => {
       province: selectedProvince.value,
       showroomId: selectedShowroom.value?.id,
       variantId: form.variantId,
-      scheduledAt: scheduledAt,
-      note: 'Khách đăng ký lái thử từ trang chủ'
-    };
-
-    await axios.post(`${API_URL}/consultations`, payload);
-
-    statusMsg.success = true;
-    statusMsg.text = "Đăng ký thành công! Chúng tôi sẽ liên hệ sớm.";
-    
-    // Reset form
-    form.customerName = '';
-    form.phoneNumber = '';
-    form.email = '';
-    
+      scheduledAt,
+      note: 'Khách đăng ký lái thử từ trang chủ',
+    }
+    await axios.post(`${API_URL}/consultations`, payload)
+    statusMsg.success = true
+    statusMsg.text = '🎉 Đăng ký thành công! Chúng tôi sẽ liên hệ sớm nhất.'
+    Object.assign(form, { customerName: '', phoneNumber: '', email: '', variantId: null, scheduleDate: '', scheduleTime: '' })
+    selectedProvince.value = null
+    selectedShowroom.value = null
   } catch (error) {
-    statusMsg.success = false;
-    statusMsg.text = error.response?.data?.message || "Đăng ký thất bại.";
+    statusMsg.success = false
+    statusMsg.text = error.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.'
   } finally {
-    isSubmitting.value = false;
+    isSubmitting.value = false
   }
-};
+}
 </script>
 
 <style scoped>
-/* Tùy chỉnh thêm nếu Tailwind chưa đủ */
-select {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;        /* standard property for compatibility */
-  background-image: none;  /* helps remove the default dropdown arrow in some browsers */
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
+
+.testdrive-root {
+  display: flex;
+  min-height: 100vh;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  background: #f8fafc;
 }
 
-/* hide default arrow in IE/Edge */
-select::-ms-expand {
-  display: none;
+/* ===== HERO PANEL ===== */
+.td-hero {
+  flex: 1.1;
+  position: relative;
+  background: linear-gradient(145deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 3rem;
+  overflow: hidden;
 }
+
+.td-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 60% 40%, rgba(37,99,235,0.25) 0%, transparent 65%);
+}
+
+.td-hero-car {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -55%);
+  width: 85%;
+  max-width: 560px;
+  object-fit: contain;
+  filter: drop-shadow(0 20px 40px rgba(0,0,0,0.5));
+  transition: transform 0.6s ease;
+}
+.td-hero-car:hover { transform: translate(-50%, -58%) scale(1.03); }
+
+.td-hero-text {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+}
+
+.td-hero-badge {
+  display: inline-block;
+  background: rgba(59,130,246,0.2);
+  border: 1px solid rgba(59,130,246,0.4);
+  color: #60a5fa;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 1rem;
+}
+
+.td-hero-title {
+  font-size: 2.4rem;
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 1rem;
+}
+
+.td-hero-sub {
+  color: rgba(255,255,255,0.6);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  max-width: 360px;
+  margin-bottom: 2rem;
+}
+
+.td-hero-stats {
+  display: flex;
+  gap: 2rem;
+}
+.td-hero-stats > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.td-hero-stats strong {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #60a5fa;
+}
+.td-hero-stats span {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ===== FORM PANEL ===== */
+.td-form-panel {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+@media (max-width: 767px) {
+  .td-form-panel { max-width: 100%; }
+}
+
+.td-form-wrap {
+  width: 100%;
+  max-width: 460px;
+}
+
+/* ===== TABS ===== */
+.tab-btn {
+  border: none;
+  background: transparent;
+  font-weight: 600;
+  color: #64748b;
+  font-size: 0.9rem;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  cursor: pointer;
+  font-family: inherit;
+}
+.tab-btn:hover { color: #1d4ed8; }
+.tab-btn--active { color: #1d4ed8 !important; border-bottom-color: #1d4ed8; }
+
+/* ===== FORM SECTION ===== */
+.form-section-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 0.75rem;
+}
+
+.input-group-text { border-color: #e2e8f0; }
+.form-control, .form-select { border-color: #e2e8f0; }
+.input-group:focus-within .input-group-text,
+.input-group:focus-within .form-control,
+.input-group:focus-within .form-select {
+  border-color: #2563eb;
+}
+.input-group:focus-within .form-control,
+.input-group:focus-within .form-select { box-shadow: none; }
+
+.ls-wide { letter-spacing: 0.08em; }
+
+.slide-down-enter-active, .slide-down-leave-active { transition: all 0.3s ease; }
+.slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-8px); }
 </style>

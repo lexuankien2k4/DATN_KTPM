@@ -1,0 +1,60 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam style strictuml
+skinparam packageStyle rectangle
+
+
+
+package " " {
+    class User {
+        - Long id
+        - String fullName
+        - String email
+        - String password
+        - String role
+        - Boolean isActive
+        --
+        + getFullName(): String
+        + getRole(): String
+        + updateProfile(data): void
+        + setStatus(status: Boolean): void
+    }
+
+    class Permission {
+        - Long id
+        - String name
+        --
+        + getName(): String
+    }   
+
+    class Role {
+        - Long id
+        - String name
+        --
+        + getName(): String
+    }
+
+    class UserRole {
+        - Long id
+        - Long userId
+        - Long roleId
+        --
+        + assignRole(user: User, role: Role): void
+    }   
+
+    class RolePermission {
+        - Long id
+        - Long roleId
+        - Long permissionId
+        --
+        + assignPermission(role: Role, permission: Permission): void
+    }
+}
+
+' Relationships - Sửa lỗi sai tên lớp và làm sạch kết nối
+User "1" *-- "0..*" UserRole : "has"
+Role "1" *-- "0..*" UserRole : "assigned to"
+Role "1" *-- "0..*" RolePermission : "has"
+Permission "1" *-- "0..*" RolePermission : "assigned to"
+
+@enduml

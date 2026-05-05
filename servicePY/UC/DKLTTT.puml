@@ -1,0 +1,42 @@
+@startuml
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+
+' Khai báo các thành phần để chúng xuất hiện ngang hàng ở trên cùng
+actor "Khách hàng" as Customer
+boundary "TrangWeb : Boundary" as UI
+control "ConsulationController : Control" as Controller
+entity "Consulation : Entity" as Entity
+
+
+
+Customer -> UI: 1. Truy cập mục "Đăng ký lái thử"
+activate UI
+    UI -> Controller: 2. getFormOptions()
+    activate Controller
+    Controller --> UI: 3. trả về danh sách Xe & Showroom
+    deactivate Controller
+    
+    Customer -> UI: 4. Chọn Mẫu xe, Showroom, Ngày & Giờ
+deactivate UI
+
+Customer -> UI: 5. Nhập Họ tên, Số điện thoại, Email
+activate UI
+    Customer -> UI: 6. Nhấn nút "Gửi yêu cầu lái thử"
+    
+    UI -> Controller: 7. submitRegistration(data)
+    activate Controller
+        ' Thay vì dùng 'create', ta gọi trực tiếp để giữ cột ngang hàng
+        Controller -> Entity: 8. khởi tạo và lưu dữ liệu (data)
+        activate Entity
+            Entity -> Entity: 9. setStatus("PENDING")
+            Entity --> Controller: 10. xác nhận khởi tạo thành công
+        deactivate Entity
+        
+        Controller --> UI: 11. Phản hồi "Đăng ký thành công"
+    deactivate Controller
+    
+    UI --> Customer: 12. Hiển thị thông báo xác nhận thành công
+deactivate UI
+
+@enduml

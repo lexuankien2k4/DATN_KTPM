@@ -1,0 +1,84 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam Style strictuml
+skinparam shadowing false
+skinparam linetype ortho
+
+' --- MODULE SẢN PHẨM & KHO ---
+class CarModel {
+    - id : Long
+    - name : String
+    - bodyType : String
+    - isActive : Boolean
+}
+
+class CarVariant {
+    - id : Long
+    - name : String
+    - price : BigDecimal
+    - battery : BigDecimal
+    + getPrice() : BigDecimal
+}
+
+class CarImage {
+    - id : Integer
+    - imageUrl : String
+}
+
+class CarStock {
+    - id : Long
+    - vinNumber : String
+    - status : StockStatus
+    - manufacturingYear : Integer
+}
+
+' --- MODULE NGHIỆP VỤ BÁN HÀNG ---
+class Deposit {
+    - id : Long
+    - customerName : String
+    - phone : String
+    - email : String
+    - amount : BigDecimal
+    - status : String
+}
+
+class Contract {
+    - id : Long
+    - contractNumber : String
+    - finalPrice : BigDecimal
+    - prepaymentAmount : BigDecimal
+    - loanTermMonths : Integer
+    - monthlyInstallment : BigDecimal
+    - interestRate : BigDecimal
+    - vinNumber : String
+    + isSigned() : boolean
+}
+
+' --- MODULE TÀI CHÍNH ---
+class Bank {
+    - id : Integer
+    - name : String
+}
+
+class LoanPolicy {
+    - id : Integer
+    - name : String
+    - minDownPaymentRate : BigDecimal
+    - maxLoanTermYears : Integer
+    - preferentialRatePercent : BigDecimal
+}
+
+' --- QUAN HỆ (COMPOSITION & ASSOCIATION) ---
+
+' Quan hệ sở hữu chặt chẽ (Composition)
+CarModel "1" *-- "0..*" CarVariant : "contains"
+CarVariant "1" *-- "0..*" CarImage : "has"
+Bank "1" *-- "0..*" LoanPolicy : "offers"
+
+' Quan hệ kết hợp (Association)
+CarVariant "1" -- "0..*" CarStock : "in stock"
+Deposit "0..*" -- "1" CarVariant : "selects"
+Contract "1" -- "0..1" Deposit : "based on"
+Contract "0..1" -- "1" CarStock : "reserves"
+
+@enduml

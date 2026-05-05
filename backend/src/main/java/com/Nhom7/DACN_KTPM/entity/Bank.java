@@ -1,5 +1,6 @@
 package com.Nhom7.DACN_KTPM.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -23,5 +24,6 @@ public class Bank {
     private Boolean isActive = true;
 
     @OneToMany(mappedBy = "bank", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<LoanPolicy> loanPolicies;
 }

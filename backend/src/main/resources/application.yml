@@ -7,11 +7,22 @@ spring:
     driver-class-name: "com.mysql.cj.jdbc.Driver"
     password: root
     username: root
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        base-url: https://generativelanguage.googleapis.com
+        completions-path: /v1beta/openai/chat/completions
+        options:
+          model: gemini-3-flash-preview
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
-
+  servlet:
+    multipart:
+      max-file-size: 10MB       # Dung lượng tối đa của 1 file
+      max-request-size: 50MB    # Tổng dung lượng tối đa của 1 request (nhiều file)
 jwt:
   signerKey: "1TjXchw5FloESb63Kc+DFhTARvpWL4jUGCwfGWxuG5SIf/1y/LgJxHnMqaF6A/ij"
   valid-duration: 3600
@@ -20,7 +31,7 @@ jwt:
 # VNPAY Config
 vnp:
   payUrl: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-  tmnCode: BXD54CA9  # Điền mã TmnCode của bạn
-  hashSecret: M9L24LRC0DG2JO4N4B1HEZP5TFS91L45 # Điền HashSecret của bạn
+  tmnCode: "JPXWTQ76"
+  hashSecret: "EEMGLJ1Z24QQM4CHWI8OJCHEU4HSP0LC"
   apiUrl: https://sandbox.vnpayment.vn/merchant_webapi/api/transaction
   returnUrl: http://localhost:3000/payment-callback

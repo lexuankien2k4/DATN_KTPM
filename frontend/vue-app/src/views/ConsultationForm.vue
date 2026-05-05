@@ -1,200 +1,199 @@
 <template>
-  <div class="min-h-screen bg-slate-50 font-sans text-gray-900 pb-20">
-    <!-- Header/Hero Section -->
-    <div class="bg-blue-900 text-white py-16 px-6 text-center mb-12 shadow-lg">
-      <h1 class="text-4xl md:text-5xl font-extrabold mb-4 uppercase tracking-tight italic">Đăng ký tư vấn & Lái thử</h1>
-      <p class="text-blue-100 text-lg max-w-2xl mx-auto font-light">Khám phá công nghệ hiện đại và trải nghiệm cảm giác lái đẳng cấp từ VinFast.</p>
+  <div class="consultation-root">
+
+    <!-- Hero Banner -->
+    <div class="consult-hero">
+      <div class="consult-hero__overlay"></div>
+      <div class="consult-hero__content">
+        <span class="section-badge mb-3">Trải nghiệm VinFast</span>
+        <h1 class="consult-hero__title">Đăng Ký Tư Vấn & Lái Thử</h1>
+        <p class="consult-hero__sub">Khám phá công nghệ hiện đại, trải nghiệm cảm giác lái đẳng cấp — hoàn toàn miễn phí.</p>
+      </div>
     </div>
 
-    <div class="container mx-auto px-4 max-w-7xl">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        
-        <!-- Left Column: Car Selection -->
-        <div class="lg:col-span-8 space-y-10">
-          
-          <!-- Category Tabs -->
-          <div class="flex items-center justify-center gap-4 bg-white p-2 rounded-2xl shadow-sm border border-gray-100 inline-flex mx-auto">
-            <button 
-              v-for="cat in categories" 
-              :key="cat.id"
+    <div class="container py-5" style="max-width:1320px">
+      <div class="row g-5">
+
+        <!-- LEFT: Car Selection -->
+        <div class="col-12 col-lg-8">
+
+          <!-- Category tabs -->
+          <div class="d-flex gap-2 mb-4 cat-tabs">
+            <button
+              v-for="cat in categories" :key="cat.id"
               @click="selectedCategory = cat.id"
-              :class="['px-6 py-3 rounded-xl font-bold transition-all duration-300', selectedCategory === cat.id ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50']"
+              :class="['btn fw-bold rounded-pill px-4 py-2', selectedCategory === cat.id ? 'btn-primary shadow' : 'btn-outline-secondary']"
             >
-              {{ cat.name }}
+              <i :class="['me-2', cat.icon]"></i>{{ cat.name }}
             </button>
           </div>
 
-          <!-- Car Grid -->
-          <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-pulse">
-            <div v-for="n in 6" :key="n" class="bg-gray-200 h-64 rounded-2xl"></div>
+          <!-- Loading skeleton -->
+          <div v-if="loading" class="row g-4">
+            <div v-for="n in 6" :key="n" class="col-12 col-sm-6 col-xl-4">
+              <div class="card border-0 shadow-sm rounded-4 skeleton-card">
+                <div class="skeleton-img"></div>
+                <div class="card-body"><div class="skeleton-line w-75 mb-2"></div><div class="skeleton-line w-50"></div></div>
+              </div>
+            </div>
           </div>
 
-          <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            <div 
-              v-for="car in filteredCars" 
-              :key="car.id"
-              @click="form.variant_id = car.id"
-              :class="['relative bg-white rounded-2xl border-2 transition-all duration-500 cursor-pointer overflow-hidden p-5 group', form.variant_id === car.id ? 'border-blue-600 ring-4 ring-blue-100' : 'border-gray-100 hover:border-blue-300 hover:shadow-xl']"
+          <!-- Empty -->
+          <div v-else-if="filteredCars.length === 0" class="card border-0 shadow-sm rounded-4 text-center py-5">
+            <i class="fas fa-car-side fa-3x text-secondary mb-3 d-block"></i>
+            <p class="text-secondary mb-0">Hiện không có xe thuộc danh mục này.</p>
+          </div>
+
+          <!-- Car cards -->
+          <div v-else class="row g-4">
+            <div
+              v-for="car in filteredCars" :key="car.id"
+              class="col-12 col-sm-6 col-xl-4"
             >
-              <!-- Selected Badge -->
-              <div v-if="form.variant_id === car.id" class="absolute top-4 right-4 bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg z-20">
-                <i class="fas fa-check text-sm"></i>
-              </div>
+              <div
+                @click="form.variant_id = car.id"
+                :class="['card car-card border-2 rounded-4 overflow-hidden cursor-pointer h-100',
+                  form.variant_id === car.id ? 'border-primary shadow car-card--selected' : 'border-light shadow-sm']"
+              >
+                <!-- Selected badge -->
+                <div v-if="form.variant_id === car.id" class="selected-badge">
+                  <i class="fas fa-check"></i>
+                </div>
 
-              <!-- Car Image -->
-              <div class="relative h-40 mb-4 flex items-center justify-center">
-                <img :src="car.image" :alt="car.name" class="max-w-full max-h-full object-contain transform transition-transform duration-500 group-hover:scale-110">
-                <div class="absolute bottom-0 w-3/4 h-2 bg-black/10 blur-lg rounded-full"></div>
-              </div>
+                <!-- Image -->
+                <div class="car-card__img-wrap">
+                  <img
+                    :src="car.image || '/assets/image/icon_logo/VinFast-logo.svg'"
+                    :alt="car.name"
+                    class="car-card__img"
+                    @error="e => e.target.src = '/assets/image/icon_logo/VinFast-logo.svg'"
+                  >
+                </div>
 
-              <!-- Car Info -->
-              <div class="space-y-2">
-                <h3 class="font-extrabold text-xl group-hover:text-blue-600 transition-colors">{{ car.name }}</h3>
-                <p class="text-blue-600 font-bold text-lg">{{ car.price ? car.price.toLocaleString() + ' VNĐ' : 'Liên hệ' }}</p>
-                <div class="flex items-center gap-4 text-xs text-gray-500 pt-2 border-t border-gray-50">
-                   <span class="flex items-center gap-1"><i class="fas fa-users"></i> {{ car.seats || 5 }} chỗ</span>
-                   <span class="flex items-center gap-1"><i class="fas fa-bolt"></i> {{ car.range || 'N/A' }}</span>
+                <!-- Info -->
+                <div class="card-body p-4">
+                  <h5 class="fw-bold text-dark mb-1 car-card__name">{{ car.name }}</h5>
+                  <!-- FIX: guard price before calling toLocaleString -->
+                  <p class="fw-bold text-primary mb-3">
+                    {{ car.price != null ? Number(car.price).toLocaleString('vi-VN') + ' VNĐ' : 'Liên hệ' }}
+                  </p>
+                  <div class="d-flex gap-3 small text-secondary border-top pt-2">
+                    <span><i class="fas fa-users me-1"></i>{{ car.seats ?? 5 }} chỗ</span>
+                    <span><i class="fas fa-bolt me-1"></i>{{ car.range ?? 'N/A' }}</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-          
-          <div v-if="!loading && filteredCars.length === 0" class="text-center py-20 bg-white rounded-2xl border border-gray-100">
-             <i class="fas fa-car-side text-5xl text-gray-200 mb-4 block"></i>
-             <p class="text-gray-500">Hiện không có xe thuộc danh mục này.</p>
-          </div>
+
         </div>
 
-        <!-- Right Column: Registration Form -->
-        <div class="lg:col-span-4">
-          <div class="bg-white rounded-3xl shadow-2xl p-8 sticky top-28 border border-gray-100">
-            <h2 class="text-2xl font-black text-gray-800 mb-8 border-b pb-4 flex items-center gap-3">
-              <i class="fas fa-paper-plane text-blue-600"></i>
-              Thông Tin Đăng Ký
-            </h2>
+        <!-- RIGHT: Form -->
+        <div class="col-12 col-lg-4">
+          <div class="card border-0 shadow-lg rounded-4 p-4 sticky-top" style="top:90px">
+            <h4 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+              <i class="fas fa-paper-plane text-primary"></i> Thông Tin Đăng Ký
+            </h4>
+            <p class="text-secondary small mb-4">Vui lòng chọn xe bên trái và điền thông tin.</p>
 
-            <form @submit.prevent="submitForm" class="space-y-6">
-              <!-- Personal Info -->
-              <div class="space-y-4">
-                <div class="group">
-                  <label class="block text-xs font-bold text-gray-400 uppercase mb-1 tracking-widest pl-1">Họ và tên *</label>
-                  <input 
-                    v-model="form.customer_name" 
-                    type="text" 
-                    required 
-                    placeholder="Nguyễn Văn A"
-                    class="w-full bg-slate-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-xl px-4 py-3 outline-none transition-all shadow-sm"
-                  >
-                </div>
-
-                <div class="group">
-                  <label class="block text-xs font-bold text-gray-400 uppercase mb-1 tracking-widest pl-1">Số điện thoại *</label>
-                  <input 
-                    v-model="form.phone_number" 
-                    type="tel" 
-                    required
-                    placeholder="09xx xxx xxx" 
-                    class="w-full bg-slate-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-xl px-4 py-3 outline-none transition-all shadow-sm"
-                  >
-                </div>
-
-                <div class="group">
-                  <label class="block text-xs font-bold text-gray-400 uppercase mb-1 tracking-widest pl-1">Email</label>
-                  <input 
-                    v-model="form.email" 
-                    type="email" 
-                    placeholder="email@example.com"
-                    class="w-full bg-slate-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-xl px-4 py-3 outline-none transition-all shadow-sm"
-                  >
+            <!-- Selected car preview -->
+            <Transition name="fade">
+              <div v-if="selectedCarObj" class="selected-preview rounded-3 p-3 mb-4 d-flex align-items-center gap-3">
+                <img :src="selectedCarObj.image || '/assets/image/icon_logo/VinFast-logo.svg'" style="height:48px;object-fit:contain" alt="">
+                <div>
+                  <div class="fw-bold small text-dark">{{ selectedCarObj.name }}</div>
+                  <div class="text-primary small fw-semibold">
+                    {{ selectedCarObj.price != null ? Number(selectedCarObj.price).toLocaleString('vi-VN') + ' VNĐ' : 'Liên hệ' }}
+                  </div>
                 </div>
               </div>
+            </Transition>
 
-              <!-- Location & Variant -->
-              <div class="space-y-4">
-                <div class="group">
-                  <label class="block text-xs font-bold text-gray-400 uppercase mb-1 tracking-widest pl-1">Tỉnh / Thành phố *</label>
-                  <select 
-                    v-model="form.province" 
-                    required
-                    class="w-full bg-slate-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-xl px-4 py-3 outline-none transition-all shadow-sm appearance-none cursor-pointer"
-                  >
-                    <option value="" disabled>Chọn Tỉnh thành</option>
-                    <option v-for="prov in provinces" :key="prov" :value="prov">{{ prov }}</option>
-                  </select>
-                </div>
-
-                <div class="group">
-                  <label class="block text-xs font-bold text-gray-400 uppercase mb-1 tracking-widest pl-1">Showroom *</label>
-                  <select 
-                    v-model="form.showroom_id" 
-                    required
-                    :disabled="!form.province"
-                    class="w-full bg-slate-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-xl px-4 py-3 outline-none transition-all shadow-sm appearance-none cursor-pointer disabled:opacity-50"
-                  >
-                    <option :value="null" disabled>Chọn Showroom</option>
-                    <option v-for="room in filteredShowrooms" :key="room.id" :value="room.id">
-                      {{ room.name }} - {{ room.address }}
-                    </option>
-                  </select>
-                </div>
+            <form @submit.prevent="submitForm" novalidate>
+              <!-- Personal info -->
+              <div class="mb-3">
+                <label class="form-label fw-semibold small">Họ và tên <span class="text-danger">*</span></label>
+                <input v-model.trim="form.customer_name" type="text" required class="form-control bg-light" placeholder="Nguyễn Văn A">
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold small">Số điện thoại <span class="text-danger">*</span></label>
+                <input v-model.trim="form.phone_number" type="tel" required class="form-control bg-light" :class="{ 'is-invalid': phoneError }" placeholder="09xx xxx xxx" @blur="validatePhone">
+                <div class="invalid-feedback">{{ phoneError }}</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold small">Email</label>
+                <input v-model.trim="form.email" type="email" class="form-control bg-light" placeholder="email@example.com">
               </div>
 
-              <!-- Time -->
-              <div class="group">
-                <label class="block text-xs font-bold text-gray-400 uppercase mb-1 tracking-widest pl-1">Lịch hẹn dự kiến</label>
-                <input 
-                  v-model="scheduledDateTime" 
-                  type="datetime-local" 
-                  class="w-full bg-slate-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-xl px-4 py-3 outline-none transition-all shadow-sm"
-                >
+              <!-- Location -->
+              <div class="mb-3">
+                <label class="form-label fw-semibold small">Tỉnh / Thành phố <span class="text-danger">*</span></label>
+                <select v-model="form.province" required class="form-select bg-light">
+                  <option value="" disabled>Chọn tỉnh thành</option>
+                  <option v-for="prov in provinces" :key="prov" :value="prov">{{ prov }}</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold small">Showroom <span class="text-danger">*</span></label>
+                <select v-model="form.showroom_id" required :disabled="!form.province || filteredShowrooms.length === 0" class="form-select bg-light">
+                  <option :value="null" disabled>{{ !form.province ? 'Chọn tỉnh trước' : 'Chọn showroom' }}</option>
+                  <option v-for="room in filteredShowrooms" :key="room.id" :value="room.id">
+                    {{ room.name }} – {{ room.address }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Schedule -->
+              <div class="mb-3">
+                <label class="form-label fw-semibold small">Lịch hẹn dự kiến</label>
+                <input v-model="scheduledDateTime" type="datetime-local" class="form-control bg-light" :min="minDateTime">
               </div>
 
               <!-- Note -->
-              <div class="group">
-                <label class="block text-xs font-bold text-gray-400 uppercase mb-1 tracking-widest pl-1">Ghi chú yêu cầu</label>
-                <textarea 
-                  v-model="form.note" 
-                  rows="3" 
-                  placeholder="Tôi muốn lái thử vào cuối tuần..."
-                  class="w-full bg-slate-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-xl px-4 py-3 outline-none transition-all shadow-sm resize-none"
-                ></textarea>
+              <div class="mb-4">
+                <label class="form-label fw-semibold small">Ghi chú</label>
+                <textarea v-model="form.note" rows="3" class="form-control bg-light resize-none" placeholder="Tôi muốn lái thử vào cuối tuần..."></textarea>
               </div>
 
-              <!-- Submission -->
-              <div class="pt-4">
-                <button 
-                  type="submit" 
-                  :disabled="isSubmitting || !form.variant_id" 
-                  class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-black py-4 rounded-xl shadow-xl hover:shadow-2xl transition-all uppercase tracking-widest flex items-center justify-center gap-3 transform hover:-translate-y-1 active:translate-y-0"
-                >
-                  <template v-if="isSubmitting">
-                    <i class="fas fa-circle-notch animate-spin"></i> Đang gửi...
-                  </template>
-                  <template v-else>
-                    Gửi yêu cầu ngay <i class="fas fa-chevron-right text-xs"></i>
-                  </template>
-                </button>
-                <p v-if="!form.variant_id" class="text-center text-xs text-red-500 mt-2 font-medium italic">Vui lòng chọn xe ở danh sách bên cạnh!</p>
-              </div>
+              <!-- Alert -->
+              <Transition name="fade">
+                <div v-if="statusMsg.text" :class="['alert py-2 d-flex align-items-center gap-2 mb-3', statusMsg.success ? 'alert-success' : 'alert-danger']" role="alert">
+                  <i :class="['fas flex-shrink-0', statusMsg.success ? 'fa-check-circle' : 'fa-exclamation-circle']"></i>
+                  <small>{{ statusMsg.text }}</small>
+                </div>
+              </Transition>
+
+              <button
+                type="submit"
+                :disabled="isSubmitting || !form.variant_id"
+                class="btn btn-primary btn-lg w-100 fw-bold shadow"
+              >
+                <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                <i v-else class="fas fa-paper-plane me-2"></i>
+                {{ isSubmitting ? 'Đang gửi...' : 'Gửi Yêu Cầu Ngay' }}
+              </button>
+              <p v-if="!form.variant_id" class="text-danger text-center small mt-2 fst-italic">
+                <i class="fas fa-info-circle me-1"></i>Vui lòng chọn xe ở danh sách bên cạnh!
+              </p>
             </form>
           </div>
         </div>
+
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-// --- DATA ---
 const categories = [
-  { id: 'ev', name: 'Ô tô điện' },
-  { id: 'gasoline', name: 'Ô tô xăng' },
-  { id: 'service', name: 'Xe dịch vụ' }
+  { id: 'ev',       name: 'Ô tô Điện',   icon: 'fas fa-bolt' },
+  { id: 'gasoline', name: 'Ô tô Xăng',   icon: 'fas fa-gas-pump' },
+  { id: 'service',  name: 'Xe Dịch vụ',  icon: 'fas fa-shuttle-van' },
 ]
 
 const selectedCategory = ref('ev')
@@ -203,8 +202,10 @@ const isSubmitting = ref(false)
 const allCars = ref([])
 const showroomsData = ref([])
 const provinces = ref([])
+const phoneError = ref('')
+const statusMsg = reactive({ text: '', success: false })
+const scheduledDateTime = ref('')
 
-// Form match DB schema (consultation_requests)
 const form = reactive({
   customer_name: '',
   phone_number: '',
@@ -213,30 +214,33 @@ const form = reactive({
   variant_id: null,
   showroom_id: null,
   scheduled_at: '',
-  note: ''
+  note: '',
 })
 
-const scheduledDateTime = ref('')
+// FIX: min datetime = now
+const minDateTime = computed(() => new Date().toISOString().slice(0, 16))
 
-// --- COMPUTED ---
-const filteredCars = computed(() => {
-  return allCars.value.filter(car => car.category === selectedCategory.value)
-})
+const filteredCars = computed(() => allCars.value.filter(c => c.category === selectedCategory.value))
 
 const filteredShowrooms = computed(() => {
   if (!form.province) return []
   return showroomsData.value.filter(s => s.province === form.province)
 })
 
-// --- METHODS ---
+// FIX: safe lookup of selected car object
+const selectedCarObj = computed(() => allCars.value.find(c => c.id === form.variant_id) ?? null)
+
+const validatePhone = () => {
+  phoneError.value = /^\d{10,11}$/.test(form.phone_number) ? '' : 'SĐT không hợp lệ (10-11 chữ số)'
+}
+
 const fetchData = async (url) => {
   try {
     const res = await fetch(url)
     const json = await res.json()
-    // Giả sử API trả về { code: 1000, result: [...] }
     return json.code === 1000 ? json.result : []
   } catch (e) {
-    console.error(e)
+    console.error('Fetch error:', url, e)
     return []
   }
 }
@@ -244,120 +248,139 @@ const fetchData = async (url) => {
 onMounted(async () => {
   loading.value = true
   try {
-    // Fetch dữ liệu song song để tối ưu tốc độ
     const [evRes, gasRes, serRes, roomRes] = await Promise.all([
       fetchData('http://localhost:8080/api/public/products/ev'),
       fetchData('http://localhost:8080/api/public/products/gasoline'),
       fetchData('http://localhost:8080/api/public/products/service'),
-      fetchData('http://localhost:8080/api/public/showrooms')
-      // fetchData('/api/public/products/ev'),
-      // fetchData('/api/public/products/gasoline'),
-      // fetchData('/api/public/products/service'),
-      // fetchData('/api/public/showrooms')
+      fetchData('http://localhost:8080/api/public/showrooms'),
     ])
 
-    const normalize = (list, cat) => list.map(c => ({
+    // FIX: normalize with safe property access — handle both camelCase & snake_case
+    const normalize = (list, cat) => (list ?? []).map(c => ({
       id: c.id,
-      name: c.name,
-      price: c.price,
-      image: c.image,
+      name: c.name ?? 'N/A',
+      // FIX: price is a number — don't coerce to string here
+      price: c.price ?? null,
+      image: c.image ?? c.firstImageUrl ?? null,
       category: cat,
-      seats: c.seats,
-      range: c.rangeNedc || c.range
+      // FIX: seats may come as seatCapacity
+      seats: c.seats ?? c.seatCapacity ?? 5,
+      // FIX: range may come as rangeNedc, range_nedc, or range
+      range: (c.rangeNedc ?? c.range_nedc ?? c.range)
+        ? `${c.rangeNedc ?? c.range_nedc ?? c.range} km`
+        : 'N/A',
     }))
 
     allCars.value = [
-      ...normalize(evRes || [], 'ev'),
-      ...normalize(gasRes || [], 'gasoline'),
-      ...normalize(serRes || [], 'service')
+      ...normalize(evRes, 'ev'),
+      ...normalize(gasRes, 'gasoline'),
+      ...normalize(serRes, 'service'),
     ]
 
-    showroomsData.value = roomRes || []
-    if (roomRes) {
-      provinces.value = [...new Set(roomRes.map(s => s.province))]
-    }
-
+    showroomsData.value = roomRes ?? []
+    provinces.value = [...new Set((roomRes ?? []).map(s => s.province).filter(Boolean))]
   } catch (err) {
-    console.error("Lỗi tải dữ liệu ban đầu:", err)
+    console.error('Lỗi tải dữ liệu ban đầu:', err)
   } finally {
     loading.value = false
   }
 })
 
-// --- ĐÃ SỬA: Đảm bảo khai báo hàm submitForm chính xác ---
+watch(() => form.province, () => {
+  form.showroom_id = null
+})
+
 const submitForm = async () => {
-  if (!form.variant_id) {
-    alert("Vui lòng chọn xe!")
-    return
-  }
-  
-  isSubmitting.value = true
-  
-  // Format scheduled_at for Backend (ISO string)
+  if (!form.variant_id) { statusMsg.text = 'Vui lòng chọn xe!'; statusMsg.success = false; return }
+  validatePhone()
+  if (phoneError.value) return
+
   if (scheduledDateTime.value) {
     form.scheduled_at = new Date(scheduledDateTime.value).toISOString()
   }
 
+  isSubmitting.value = true
+  statusMsg.text = ''
+
   try {
-    //nếu không chạy ngrol thì thay thành: const evRes = await fetch('http://localhost:8080/api/public/products/ev') 
-      //tương tự với các api khác
-      const response = await fetch('http://localhost:8080/api/public/consultations', {
-    //const response = await fetch('/api/public/consultations', {
+    const response = await fetch('http://localhost:8080/api/public/consultations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form)
+      body: JSON.stringify(form),
     })
-
     const result = await response.json()
-
     if (result.code === 1000) {
-      alert("Đăng ký tư vấn thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất.")
-      // Reset form
-      Object.assign(form, {
-         customer_name: '', phone_number: '', email: '', province: '', 
-         variant_id: null, showroom_id: null, scheduled_at: '', note: ''
-      })
-      router.push('/')
+      statusMsg.success = true
+      statusMsg.text = '🎉 Đăng ký thành công! Chúng tôi sẽ liên hệ sớm nhất.'
+      Object.assign(form, { customer_name: '', phone_number: '', email: '', province: '', variant_id: null, showroom_id: null, scheduled_at: '', note: '' })
+      scheduledDateTime.value = ''
+      setTimeout(() => router.push('/'), 2000)
     } else {
-      // Hiển thị message lỗi từ Backend trả về
-      alert(result.message || "Gửi yêu cầu thất bại. Vui lòng thử lại.")
+      statusMsg.success = false
+      statusMsg.text = result.message || 'Gửi yêu cầu thất bại. Vui lòng thử lại.'
     }
   } catch (error) {
     console.error(error)
-    alert("Lỗi kết nối server.")
+    statusMsg.success = false
+    statusMsg.text = 'Lỗi kết nối server.'
   } finally {
     isSubmitting.value = false
   }
 }
-
-// Reset showroom if province changes
-watch(() => form.province, () => {
-  form.showroom_id = null
-})
 </script>
 
 <style scoped>
-/* Glassmorphism & Custom scroll */
-.container {
-  scrollbar-width: thin;
-  scrollbar-color: #3b82f6 #f1f5f9;
-}
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
+.consultation-root { font-family: 'Be Vietnam Pro', sans-serif; background: #f8fafc; min-height: 100vh; }
 
-::-webkit-datetime-edit-fields-wrapper { font-family: inherit; }
-
-/* Animation for cards */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Hero */
+.consult-hero {
+  position: relative;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #1d4ed8 100%);
+  padding: 5rem 1.5rem;
+  text-align: center;
+  overflow: hidden;
 }
-
-.variant-card {
-  animation: fadeInUp 0.4s ease-out forwards;
+.consult-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
+.consult-hero__overlay { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, rgba(37,99,235,0.2) 0%, transparent 70%); }
+.consult-hero__content { position: relative; z-index: 1; }
+.consult-hero__title { font-size: clamp(1.6rem, 4vw, 2.8rem); font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: -0.5px; margin-bottom: 0.75rem; }
+.consult-hero__sub { color: rgba(255,255,255,0.65); font-size: 1rem; max-width: 500px; margin: 0 auto; }
+
+.section-badge { display: inline-block; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #93c5fd; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; padding: 4px 14px; border-radius: 20px; text-transform: uppercase; }
+
+/* Car cards */
+.car-card { cursor: pointer; transition: transform 0.3s, box-shadow 0.3s, border-color 0.2s; }
+.car-card:hover { transform: translateY(-5px); box-shadow: 0 12px 32px rgba(0,0,0,0.12) !important; }
+.car-card--selected { transform: translateY(-4px); }
+.car-card__img-wrap { height: 160px; display: flex; align-items: center; justify-content: center; padding: 1rem; background: #f8fafc; overflow: hidden; }
+.car-card__img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.4s; }
+.car-card:hover .car-card__img { transform: scale(1.06); }
+.car-card__name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.selected-badge { position: absolute; top: 12px; right: 12px; width: 30px; height: 30px; background: #2563eb; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; box-shadow: 0 2px 8px rgba(37,99,235,0.4); z-index: 10; }
+
+/* Selected preview */
+.selected-preview { background: #eff6ff; border: 1px solid #bfdbfe; }
+
+/* Skeleton */
+.skeleton-card { height: 260px; overflow: hidden; }
+.skeleton-img { height: 160px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+.skeleton-line { height: 14px; background: #e5e7eb; border-radius: 4px; animation: shimmer 1.5s infinite; }
+.w-75 { width: 75% !important; } .w-50 { width: 50% !important; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* Sticky form */
+.sticky-top { top: 90px !important; }
+.form-control, .form-select { border-color: #e2e8f0; transition: border-color 0.2s; }
+.form-control:focus, .form-select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+.resize-none { resize: none !important; }
+.cursor-pointer { cursor: pointer; }
+
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>

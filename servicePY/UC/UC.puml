@@ -1,0 +1,92 @@
+@startuml
+!theme plain
+skinparam componentStyle uml2
+skinparam DefaultFontName Arial
+skinparam component {
+  BackgroundColor White
+  BorderColor #1565C0
+}
+skinparam package {
+  BackgroundColor #F8FBFF
+  BorderColor #90CAF9
+}
+
+title Biểu đồ Thành phần\nHệ thống Tư vấn và Mua Xe Trực tuyến
+
+' --- TẦNG FRONTEND (VUE.JS) ---
+package "Tầng Giao diện (Frontend - Vue.js)" {
+    component [Module Khách hàng\n(PurchaseWizard.vue)] as CustUI
+    component [Module Quản trị\n(CarStockManager.vue)] as AdminUI
+    component [API Client\n(Axios Interceptors)] as Axios
+    
+    CustUI ..> Axios : Yêu cầu API
+    AdminUI ..> Axios : Yêu cầu API
+}
+
+' --- TẦNG BACKEND (SPRING BOOT) ---
+package "Tầng Máy chủ Ứng dụng (Backend - Spring Boot)" {
+    
+    package "Tầng Giao tiếp (Controllers)" {
+        component [PaymentController] as PayCtrl
+        component [ContractController] as ContractCtrl
+        component [CarStockController] as StockCtrl
+    }
+    
+    package "Tầng Nghiệp vụ (Services)" {
+        component [AI Service\n(Chatbot & Recommend)] as AISvc
+        component [PaymentService] as PaySvc
+        component [ContractService] as ContractSvc
+        component [CarStockService] as StockSvc
+    }
+    
+    package "Tầng Truy cập Dữ liệu (Repositories)" {
+        component [DepositRepository] as DepRepo
+        component [ContractRepository] as ContractRepo
+        component [CarStockRepository] as StockRepo
+        component [UserRepository] as UserRepo
+    }
+    
+    ' Controller gọi Service
+    PayCtrl ..> PaySvc
+    ContractCtrl ..> ContractSvc
+    StockCtrl ..> StockSvc
+    
+    ' Cross-Service Communication (Nghiệp vụ chéo)
+    PaySvc .right.> ContractSvc : "Kích hoạt Hợp đồng"
+    ContractSvc .right.> StockSvc : "Khóa xe (FIFO) &\nlấy mã VIN"
+    
+    ' Service gọi Repository
+    PaySvc ..> DepRepo
+    PaySvc ..> UserRepo
+    
+    ContractSvc ..> ContractRepo
+    ContractSvc ..> DepRepo
+    
+    StockSvc ..> StockRepo
+}
+
+' --- TẦNG DATABASE ---
+database "Cơ sở dữ liệu (MySQL)" as DB {
+
+    
+    DepRepo ..> DB
+    ContractRepo ..>DB
+    StockRepo ..> DB
+    UserRepo ..> DB
+}
+
+' --- HỆ THỐNG NGOÀI ---
+cloud "Hệ thống VNPay" as VNPay {
+    component [VNPay Payment Gateway] as VNPayGW
+}
+
+' --- KẾT NỐI LIÊN TẦNG ---
+Axios ..> PayCtrl : HTTP/JSON
+Axios ..> ContractCtrl : HTTP/JSON
+Axios ..> StockCtrl : HTTP/JSON
+CustUI ..> AISvc : HTTP/JSON (Chatbot)
+
+PaySvc ..> VNPayGW : "Tạo URL Thanh toán"
+VNPayGW ..> PayCtrl : "IPN Webhook / Callback\n(vnpay-callback)"
+
+@enduml

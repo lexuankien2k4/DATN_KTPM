@@ -41,7 +41,10 @@ public enum ErrorCode {
     // Sửa dòng này: Thêm HttpStatus.BAD_REQUEST (Lỗi dữ liệu đầu vào)
     INVALID_AMOUNT(2002, "Amount must be greater than 0", HttpStatus.BAD_REQUEST),
     // ...
-    JSON_PROCESSING_ERROR(1011,"mistake processing json" ,HttpStatus.BAD_REQUEST );
+    JSON_PROCESSING_ERROR(1011,"mistake processing json" ,HttpStatus.BAD_REQUEST ),
+    OUT_OF_STOCK(1011,"out of stock" ,HttpStatus.BAD_REQUEST ),
+    COLOR_NOT_FOUND(1005, "color not existed", HttpStatus.NOT_FOUND),
+    DUPLICATE_VIN_IN_LIST(1005, "showroom not existed", HttpStatus.NOT_FOUND );
 
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

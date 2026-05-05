@@ -1,0 +1,68 @@
+@startuml
+!theme plain
+skinparam componentStyle rectangle
+skinparam DefaultFontName Arial
+skinparam component {
+  BackgroundColor White
+  BorderColor #1565C0
+}
+skinparam interface {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+}
+
+title Biểu đồ Thành phần (Component Diagram)\nHệ thống Tư vấn và Mua Xe Trực tuyến tích hợp AI
+
+' --- LỚP CLIENT (FRONTEND) ---
+node "Máy khách (Client)" {
+    component "Frontend Application (Vue.js)" as Frontend {
+        [Ứng dụng Khách hàng\n(Chatbot, Purchase Wizard)] as ClientUI
+        [Ứng dụng Quản trị\n(Admin Dashboard)] as AdminUI
+    }
+}
+
+' --- LỚP SERVER (BACKEND) ---
+node "Máy chủ Ứng dụng (Application Server)" {
+    interface "Cổng giao tiếp RESTful API" as REST
+    
+    component "Backend Application (Spring Boot)" as Backend {
+        [Module Trợ lý ảo AI\n(Intent & Recommendation)] as AIService
+        [Module Quản lý Hợp đồng\n(Contract Service)] as ContractService
+        [Module Quản lý Kho xe\n(Car Stock Service)] as StockService
+        [Module Thanh toán\n(Payment Service)] as PaymentService
+        
+        ' Giao tiếp nội bộ
+        PaymentService .right.> ContractService : "Kích hoạt cập nhật HĐ"
+        ContractService .down.> StockService : "Yêu cầu gán mã VIN (FIFO)"
+    }
+    
+    REST - Backend
+}
+
+' --- LỚP DỮ LIỆU ---
+database "Hệ quản trị CSDL (MySQL)" as DB {
+    component "Database Schema" {
+        [Dữ liệu Người dùng\n(Users, Roles)] as DB_User
+        [Dữ liệu Giao dịch\n(Contracts, Deposits)] as DB_Txn
+        [Dữ liệu Kho & Xe\n(CarStock, Variants)] as DB_Stock
+    }
+}
+
+' --- HỆ THỐNG NGOÀI ---
+cloud "Các Dịch vụ Ngoại vi (External Services)" {
+    [Cổng thanh toán VNPAY] as VNPay_API
+}
+
+' --- KẾT NỐI (CONNECTIONS) ---
+ClientUI ..> REST : HTTP/JSON
+AdminUI ..> REST : HTTP/JSON
+
+AIService --> DB_Stock : Truy vấn (Read)
+ContractService --> DB_Txn : Đọc/Ghi (CRUD)
+StockService --> DB_Stock : Đọc/Ghi (CRUD)
+PaymentService --> DB_Txn : Cập nhật trạng thái
+PaymentService --> DB_User : Lưu User mới
+
+PaymentService <..> VNPay_API : "HTTPS / Webhook Callback"
+
+@enduml

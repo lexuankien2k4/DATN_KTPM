@@ -1,0 +1,41 @@
+@startuml
+skinparam Style strictuml
+
+skinparam sequenceMessageAlign center
+
+actor "Khách hàng" as KH
+boundary "Giao diện Chat" as UI
+control "TuVanControl" as Ctrl
+control "AIServiceController" as AI
+entity "CarModel" as ENT
+
+' Bước 1: Mở chức năng
+KH -> UI: 1: Mở chức năng "Tư vấn cùng AI"
+activate UI
+
+' Bước 2: AI gửi lời chào và câu hỏi gợi ý
+UI -> Ctrl: 2: Yêu cầu khởi tạo hội thoại
+activate Ctrl
+Ctrl -> AI: 2.1: Lấy lời chào và danh sách câu hỏi gợi ý
+AI --> Ctrl: 2.2: Trả về (Mục đích, Số chỗ, Khoảng giá)
+Ctrl --> UI: 2.3: Hiển thị lời chào và các nút gợi ý
+deactivate Ctrl
+UI --> KH: 2.4: Trình bày nội dung tư vấn ban đầu
+
+' Bước 3: Khách hàng nhập câu trả lời
+KH -> UI: 3: Nhập nội dung trả lời/câu hỏi cụ thể
+UI -> Ctrl: 3.1: Gửi yêu cầu phân tích nhu cầu
+activate Ctrl
+
+' Bước 4: Hệ thống phân tích và đưa ra kết quả
+Ctrl -> AI: 4: Phân tích nhu cầu khách hàng
+AI -> ENT: 4.1: Tìm kiếm mẫu xe phù hợp trong danh mục
+ENT --> AI: 4.2: Trả về dữ liệu kỹ thuật
+AI -> AI: 4.3: Tổng hợp lời giải thích vì sao phù hợp
+AI --> Ctrl: 4.4: Trả về danh sách xe + Lời giải thích
+Ctrl --> UI: 4.5: Hiển thị danh sách mẫu xe tối ưu
+deactivate Ctrl
+UI --> KH: 4.6: Hiển thị kết quả tư vấn chi tiết
+deactivate UI
+
+@enduml

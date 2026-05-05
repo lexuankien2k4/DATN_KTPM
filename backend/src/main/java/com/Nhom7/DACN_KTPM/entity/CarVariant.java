@@ -30,10 +30,8 @@ public class CarVariant {
     @Column(name = "seat_capacity")
     private Integer seatCapacity; // chỗ ngồi
 
-    @Column(name = "fuel_type") // loại nhiên liệu
-    private String fuelType; // Ví dụ: "Xăng", "Dầu", "Điện", "Hybrid"
     @Column(name = "price", nullable = false)
-    private Long price;
+    private BigDecimal price;
     @Column(name = "discounted_price",nullable = true)
     private Long discountedPrice;
     @Column(name = "is_active")

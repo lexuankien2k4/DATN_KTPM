@@ -1,54 +1,47 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-// --- STATE ---
 const bannerData = ref([])
-const evCarsData = ref([])       // Xe điện
-const gasolineCarsData = ref([]) // Xe xăng
-const serviceCarsData = ref([])  // Xe dịch vụ
+const evCarsData = ref([])
+const gasolineCarsData = ref([])
+const serviceCarsData = ref([])
 const accessoriesData = ref([])
-
-// Index điều khiển slider
+const getImageUrl = (path) => {
+  if (!path) return '/assets/image/icon_logo/VinFast-logo.svg'; // Ảnh mặc định nếu xe chưa có ảnh
+  if (path.startsWith('http') || path.startsWith('blob:')) return path;
+  return `http://localhost:8080${path.startsWith('/') ? '' : '/'}${path}`;
+}
 const currentBannerIndex = ref(0)
 const evIndex = ref(0)
 const gasIndex = ref(0)
 const serIndex = ref(0)
 
 let bannerInterval = null
+let revealObserver = null
 
-// --- HELPER FETCH API ---
 async function fetchData(url) {
   try {
     const response = await fetch(url)
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
     return await response.json()
   } catch (e) {
-    console.error(`Failed to fetch ${url}:`, e);
-    return []
+    console.error(`Failed to fetch ${url}:`, e)
+    return null
   }
 }
 
-// --- COMPUTED PROPERTIES CHO TỪNG LOẠI XE ---
-const currentEvCar = computed(() => evCarsData.value[evIndex.value] || {})
-const currentGasCar = computed(() => gasolineCarsData.value[gasIndex.value] || {})
-const currentSerCar = computed(() => serviceCarsData.value[serIndex.value] || {})
-
+const currentEvCar = computed(() => evCarsData.value[evIndex.value] ?? {})
+const currentGasCar = computed(() => gasolineCarsData.value[gasIndex.value] ?? {})
+const currentSerCar = computed(() => serviceCarsData.value[serIndex.value] ?? {})
 const featuredAccessories = computed(() => accessoriesData.value.slice(0, 4))
 
-// --- ACTIONS ĐIỀU HƯỚNG ---
-// Xe điện
-const nextEv = () => { evIndex.value = (evIndex.value + 1) % evCarsData.value.length }
-const prevEv = () => { evIndex.value = (evIndex.value - 1 + evCarsData.value.length) % evCarsData.value.length }
+const nextEv = () => { if (evCarsData.value.length) evIndex.value = (evIndex.value + 1) % evCarsData.value.length }
+const prevEv = () => { if (evCarsData.value.length) evIndex.value = (evIndex.value - 1 + evCarsData.value.length) % evCarsData.value.length }
+const nextGas = () => { if (gasolineCarsData.value.length) gasIndex.value = (gasIndex.value + 1) % gasolineCarsData.value.length }
+const prevGas = () => { if (gasolineCarsData.value.length) gasIndex.value = (gasIndex.value - 1 + gasolineCarsData.value.length) % gasolineCarsData.value.length }
+const nextSer = () => { if (serviceCarsData.value.length) serIndex.value = (serIndex.value + 1) % serviceCarsData.value.length }
+const prevSer = () => { if (serviceCarsData.value.length) serIndex.value = (serIndex.value - 1 + serviceCarsData.value.length) % serviceCarsData.value.length }
 
-// Xe xăng
-const nextGas = () => { gasIndex.value = (gasIndex.value + 1) % gasolineCarsData.value.length }
-const prevGas = () => { gasIndex.value = (gasIndex.value - 1 + gasolineCarsData.value.length) % gasolineCarsData.value.length }
-
-// Xe dịch vụ
-const nextSer = () => { serIndex.value = (serIndex.value + 1) % serviceCarsData.value.length }
-const prevSer = () => { serIndex.value = (serIndex.value - 1 + serviceCarsData.value.length) % serviceCarsData.value.length }
-
-// Banner Autoplay
 function startBannerAutoplay() {
   if (bannerData.value.length <= 1) return
   clearInterval(bannerInterval)
@@ -57,303 +50,503 @@ function startBannerAutoplay() {
   }, 5000)
 }
 
-// --- LIFECYCLE ---
+function formatPrice(price) {
+  if (!price) return 'Liên hệ'
+  return new Intl.NumberFormat('vi-VN').format(price) + ' ₫'
+}
+
 onMounted(async () => {
-    // 1. Fetch Banner
-    const imageData = await fetchData('/assets/js/image.json')
-    if(imageData && imageData.banner) {
-          bannerData.value = imageData.banner
-          if (bannerData.value.length > 0) startBannerAutoplay()
+  const imageData = await fetchData('/assets/js/image.json')
+  if (imageData?.banner) {
+    bannerData.value = imageData.banner
+    if (bannerData.value.length > 0) startBannerAutoplay()
+  }
+
+  try {
+    // Gọi API tập trung để lấy tất cả các xe đang CÓ SẴN trong kho
+    // Bạn nên truyền size lớn (VD: 100) để lấy đủ các mẫu xe hiển thị trên Home
+    const response = await fetch('http://localhost:8080/api/variants/available?size=100');
+    const json = await response.json();
+
+    if (json.code === 1000) {
+      const allAvailableVariants = json.result.content; // Lấy mảng dữ liệu từ Page object
+
+      // Phân loại xe dựa trên fuelType hoặc modelName để đưa vào đúng khu vực giao diện
+      
+      // 1. Lọc xe điện (EV)
+      evCarsData.value = allAvailableVariants.filter(car => 
+        car.fuelType?.toLowerCase().includes('điện') || car.modelName?.startsWith('VF')
+      );
+
+      // 2. Lọc xe xăng (Gasoline)
+      gasolineCarsData.value = allAvailableVariants.filter(car => 
+        car.fuelType?.toLowerCase().includes('xăng')
+      );
+
+  serviceCarsData.value = allAvailableVariants.filter(car => 
+        car.modelName === 'Dòng xe dịch vụ' || 
+        car.name?.includes('dịch vụ') ||
+        car.fuelType?.includes('dịch vụ')
+      );
     }
+  } catch (e) {
+    console.error('Lỗi khi gọi API /api/variants/available:', e);
+  }
 
-    // 2. Fetch dữ liệu từ Backend
-    try {
-      //nếu không chạy ngrol thì thay thành: const evRes = await fetch('http://localhost:8080/api/public/products/ev') 
-      //tương tự với các api khác
-        // A. Xe Điện
-        const evRes = await fetch('http://localhost:8080/api/public/products/ev')
-        //const evRes = await fetch('/api/public/products/ev')
-        const evJson = await evRes.json()
-        if (evJson.code === 1000) evCarsData.value = evJson.result
+  const accessoryData = await fetchData('/assets/js/phukien.json')
+  if (accessoryData?.pk) accessoriesData.value = accessoryData.pk
 
-        // B. Xe Xăng
-        const gasRes = await fetch('http://localhost:8080/api/public/products/gasoline')
-        //const gasRes = await fetch('/api/public/products/gasoline')
-        const gasJson = await gasRes.json()
-        if (gasJson.code === 1000) gasolineCarsData.value = gasJson.result
+  // Scroll reveal
+  revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible')
+        revealObserver.unobserve(entry.target)
+      }
+    })
+  }, { threshold: 0.1 })
 
-        // C. Xe Dịch Vụ
-        const serRes = await fetch('http://localhost:8080/api/public/products/service')
-        //const serRes = await fetch('/api/public/products/service')
-        const serJson = await serRes.json()
-        if (serJson.code === 1000) serviceCarsData.value = serJson.result
-
-    } catch (e) {
-        console.error("Lỗi tải dữ liệu backend", e)
-    }
-
-    // 3. Fetch Phụ kiện
-    const accessoryData = await fetchData('/assets/js/phukien.json') 
-    if (accessoryData) {
-      accessoriesData.value = accessoryData.pk
-    }
-
-    // Scroll Animation
-    const revealElements = document.querySelectorAll('.reveal');
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-            }
-        });
-    }, { threshold: 0.1 });
-    revealElements.forEach(el => observer.observe(el));
+  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el))
 })
 
 onUnmounted(() => {
   clearInterval(bannerInterval)
+  revealObserver?.disconnect()
 })
 </script>
 
 <template>
   <main>
-    <section id="hero-slider">
-      <img 
+    <!-- Hero Banner -->
+    <section id="hero-slider" class="hero-slider position-relative overflow-hidden">
+      <img
         v-for="(banner, index) in bannerData"
         :key="banner.image || index"
         :src="banner.image"
         :alt="`VinFast Banner ${index + 1}`"
         class="slider-image"
-        :class="{ 'active': index === currentBannerIndex }"
+        :class="{ active: index === currentBannerIndex }"
       />
+      <!-- Dots -->
+      <div v-if="bannerData.length > 1" class="slider-dots">
+        <button
+          v-for="(_, i) in bannerData" :key="i"
+          class="slider-dot"
+          :class="{ active: i === currentBannerIndex }"
+          @click="currentBannerIndex = i"
+        ></button>
+      </div>
     </section>
 
-    <section id="ev-showcase" class="py-20 md:py-28 overflow-hidden bg-white">
-      <div class="container mx-auto px-6">
-         <div class="text-center mb-16 reveal">
-            <h2 class="text-3xl md:text-5xl font-bold text-gray-900 mb-4">Ô TÔ ĐIỆN THÔNG MINH</h2>
-            <p class="text-gray-600 text-lg max-w-2xl mx-auto">Thiết kế tinh xảo, công nghệ vượt trội, khẳng định vị thế dẫn đầu.</p>
+    <!-- EV Cars -->
+    <section id="ev-showcase" class="py-5 py-md-7 bg-white overflow-hidden">
+      <div class="container">
+        <div class="text-center mb-5 reveal">
+          <span class="section-badge text-uppercase">Xe Điện</span>
+          <h2 class="display-5 fw-bold text-dark mt-2 mb-3">Ô TÔ ĐIỆN THÔNG MINH</h2>
+          <p class="text-secondary fs-5 mx-auto" style="max-width:560px">Thiết kế tinh xảo, công nghệ vượt trội, khẳng định vị thế dẫn đầu.</p>
         </div>
-        
+
         <template v-if="evCarsData.length > 0">
-          <div class="product-showcase grid grid-cols-1 lg:grid-cols-2 gap-y-12 lg:gap-x-8 items-center reveal">
-            <div class="product-image">
-              <img :src="currentEvCar.image" alt="Car Image" class="w-full rounded-lg shadow-2xl transition-transform duration-500 hover:scale-105">
+          <div class="row align-items-center g-5 reveal">
+            <div class="col-12 col-lg-6">
+              <div class="car-image-wrap">
+<img :src="getImageUrl(currentEvCar.firstImageUrl)" :alt="currentEvCar.name" class="img-fluid rounded-4 shadow-lg car-img">              </div>
             </div>
-            <div class="product-details">
-              <h3 class="text-4xl font-extrabold text-gray-900 mb-4">{{ currentEvCar.name }}</h3>
-              <p class="text-3xl font-bold text-blue-600 mb-6">{{ currentEvCar.price ? currentEvCar.price.toLocaleString() + ' VNĐ' : 'Liên hệ' }}</p>
-              
-              <div class="grid grid-cols-2 gap-x-3 gap-y-4 text-lg mb-8">
-                <div class="flex items-center text-gray-700"><i class="fas fa-road text-blue-500 w-6 mr-3"></i><span>{{ currentEvCar.range || 'N/A' }}</span></div>
-                <div class="flex items-center text-gray-700"><i class="fas fa-car-alt text-blue-500 w-6 mr-3"></i><span>{{ currentEvCar.type || 'SUV' }}</span></div>
-                <div class="flex items-center text-gray-700"><i class="fas fa-users text-blue-500 w-6 mr-3"></i><span>{{ currentEvCar.seats || '5' }} Chỗ</span></div>
+            <div class="col-12 col-lg-6">
+              <h3 class="display-6 fw-bold text-dark mb-2">{{ currentEvCar.name }}</h3>
+              <p class="fs-3 fw-bold text-primary mb-4">{{ formatPrice(currentEvCar.price) }}</p>
+              <div class="row g-3 mb-4">
+                <div class="col-6"><div class="spec-chip"><i class="fas fa-road text-primary me-2"></i>{{ currentEvCar.rangeNedc || 'N/A' }}km (NEDC)</div></div>
+                <div class="col-6"><div class="spec-chip"><i class="fas fa-car-alt text-primary me-2"></i>{{ currentEvCar.type || 'SUV' }}</div></div>
+                <div class="col-6"><div class="spec-chip"><i class="fas fa-users text-primary me-2"></i>{{ currentEvCar.seats || '5' }} Chỗ</div></div>
+                <div class="col-6">
+                  <div class="spec-chip fw-bold" :class="currentEvCar.availableStock > 0 ? 'text-success border-success bg-success-soft' : 'text-danger border-danger bg-danger-soft'">
+                    <i class="fas" :class="currentEvCar.availableStock > 0 ? 'fa-check-circle me-2' : 'fa-times-circle me-2'"></i>
+                    {{ currentEvCar.battery }}kWh
+                  </div>
+                </div>
               </div>
-              
-              <div class="flex flex-col sm:flex-row gap-4">
-<router-link 
-  :to="{ path: '/deposit', query: { id: currentEvCar.id, type: 'ev' } }" 
-  class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-center shadow-md">
-  Đặt Cọc
-</router-link>
-                 <router-link :to="`/product/${currentEvCar.id}`" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-8 rounded-full text-center">Xem Chi Tiết</router-link>
+              <div class="d-flex flex-column flex-sm-row gap-3">
+                <router-link v-if="currentEvCar.availableStock > 0" :to="{ path: '/deposit', query: { id: currentEvCar.id, type: 'ev' } }" class="btn btn-primary btn-lg rounded-pill px-4 fw-bold shadow">Đặt Cọc</router-link>
+                <button v-else disabled class="btn btn-secondary btn-lg rounded-pill px-4 fw-bold shadow" style="cursor: not-allowed; opacity: 0.7;">Tạm Hết Hàng</button>
+                <router-link :to="`/product/${currentEvCar.id}`" class="btn btn-outline-secondary btn-lg rounded-pill px-4 fw-bold">Xem Chi Tiết</router-link>
               </div>
             </div>
           </div>
-          <div v-if="evCarsData.length > 1" class="flex justify-center mt-12 space-x-4">
-            <button @click="prevEv" class="bg-white hover:bg-blue-600 text-gray-700 hover:text-white w-14 h-14 rounded-full text-2xl shadow-md"><i class="fas fa-arrow-left"></i></button>
-            <button @click="nextEv" class="bg-white hover:bg-blue-600 text-gray-700 hover:text-white w-14 h-14 rounded-full text-2xl shadow-md"><i class="fas fa-arrow-right"></i></button>
+          <div v-if="evCarsData.length > 1" class="d-flex justify-content-center gap-3 mt-5">
+            <button @click="prevEv" class="btn-nav-circle"><i class="fas fa-arrow-left"></i></button>
+            <span class="d-flex align-items-center text-secondary small">{{ evIndex + 1 }} / {{ evCarsData.length }}</span>
+            <button @click="nextEv" class="btn-nav-circle"><i class="fas fa-arrow-right"></i></button>
           </div>
         </template>
-        <div v-else class="text-center p-12 text-gray-500">Đang tải dữ liệu xe điện...</div>
+        <div v-else class="text-center py-5 text-secondary">
+          <div class="spinner-border text-primary mb-3" role="status"></div>
+          <p>Đang tải dữ liệu xe điện...</p>
+        </div>
       </div>
     </section>
 
-    <section id="gas-showcase" class="py-20 md:py-28 overflow-hidden bg-gray-50">
-      <div class="container mx-auto px-6">
-         <div class="text-center mb-16 reveal">
-            <h2 class="text-3xl md:text-5xl font-bold text-gray-900 mb-4">XE ĐỘNG CƠ XĂNG</h2>
-            <p class="text-gray-600 text-lg max-w-2xl mx-auto">Mạnh mẽ, sang trọng và đẳng cấp thời thượng.</p>
+    <!-- Gasoline Cars -->
+    <section id="gasoline-showcase" class="py-5 py-md-7 bg-light overflow-hidden">
+      <div class="container">
+        <div class="text-center mb-5 reveal">
+          <span class="section-badge text-uppercase">Xe Xăng</span>
+          <h2 class="display-5 fw-bold text-dark mt-2 mb-3">HIỆU SUẤT VƯỢT TRỘI</h2>
+          <p class="text-secondary fs-5 mx-auto" style="max-width:560px">Sức mạnh bền bỉ, tiết kiệm nhiên liệu, lý tưởng cho mọi hành trình.</p>
         </div>
-        
+
         <template v-if="gasolineCarsData.length > 0">
-          <div class="product-showcase grid grid-cols-1 lg:grid-cols-2 gap-y-12 lg:gap-x-8 items-center reveal">
-            <div class="product-image order-last lg:order-first">
-              <img :src="currentGasCar.image" alt="Car Image" class="w-full rounded-lg shadow-2xl transition-transform duration-500 hover:scale-105">
+          <div class="row align-items-center g-5 flex-lg-row-reverse reveal">
+            <div class="col-12 col-lg-6">
+              <div class="car-image-wrap">
+<img :src="getImageUrl(currentGasCar.firstImageUrl)" :alt="currentGasCar.name" class="img-fluid rounded-4 shadow-lg car-img">              </div>
             </div>
-            <div class="product-details">
-              <h3 class="text-4xl font-extrabold text-gray-900 mb-4">{{ currentGasCar.name }}</h3>
-              <p class="text-3xl font-bold text-red-600 mb-6">{{ currentGasCar.price ? currentGasCar.price.toLocaleString() + ' VNĐ' : 'Liên hệ' }}</p>
-              
-              <div class="grid grid-cols-2 gap-x-3 gap-y-4 text-lg mb-8">
-                <div class="flex items-center text-gray-700"><i class="fas fa-gas-pump text-red-500 w-6 mr-3"></i><span>Xăng</span></div>
-                <div class="flex items-center text-gray-700"><i class="fas fa-car-side text-red-500 w-6 mr-3"></i><span>{{ currentGasCar.type }}</span></div>
-                <div class="flex items-center text-gray-700"><i class="fas fa-users text-red-500 w-6 mr-3"></i><span>{{ currentGasCar.seats || '5' }} Chỗ</span></div>
+            <div class="col-12 col-lg-6">
+              <h3 class="display-6 fw-bold text-dark mb-2">{{ currentGasCar.name }}</h3>
+              <p class="fs-3 fw-bold text-danger mb-4">{{ formatPrice(currentGasCar.price) }}</p>
+              <div class="row g-3 mb-4">
+                <div class="col-6"><div class="spec-chip"><i class="fas fa-gas-pump text-danger me-2"></i>{{ currentGasCar.fuelType || 'Xăng' }}</div></div>
+                <div class="col-6"><div class="spec-chip"><i class="fas fa-car-alt text-danger me-2"></i>{{ currentGasCar.type || 'Sedan' }}</div></div>
+                <div class="col-6"><div class="spec-chip"><i class="fas fa-users text-danger me-2"></i>{{ currentGasCar.seats || '5' }} Chỗ</div></div>
+                <div class="col-6">
+                  <div class="spec-chip fw-bold" :class="currentGasCar.availableStock > 0 ? 'text-success border-success bg-success-soft' : 'text-danger border-danger bg-danger-soft'">
+                    <i class="fas" :class="currentGasCar.availableStock > 0 ? 'fa-check-circle me-2' : 'fa-times-circle me-2'"></i>
+                    {{ currentGasCar.drivetrain }}
+                  </div>
+                </div>
               </div>
-              
-              <div class="flex flex-col sm:flex-row gap-4">
-                 <button disabled class="bg-gray-400 cursor-not-allowed text-white font-bold py-3 px-8 rounded-full text-center shadow-md">Đặt Cọc</button>
-                 <router-link :to="`/product/${currentGasCar.id}`" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-8 rounded-full text-center">Xem Chi Tiết</router-link>
+              <div class="d-flex flex-column flex-sm-row gap-3">
+                <router-link v-if="currentGasCar.availableStock > 0" :to="{ path: '/deposit', query: { id: currentGasCar.id, type: 'gasoline' } }" class="btn btn-danger btn-lg rounded-pill px-4 fw-bold shadow">Đặt Cọc</router-link>
+                <button v-else disabled class="btn btn-secondary btn-lg rounded-pill px-4 fw-bold shadow" style="cursor: not-allowed; opacity: 0.7;">Tạm Hết Hàng</button>
+                <router-link :to="`/product/${currentGasCar.id}`" class="btn btn-outline-secondary btn-lg rounded-pill px-4 fw-bold">Xem Chi Tiết</router-link>
               </div>
             </div>
           </div>
-          <div v-if="gasolineCarsData.length > 1" class="flex justify-center mt-12 space-x-4">
-            <button @click="prevGas" class="bg-white hover:bg-red-600 text-gray-700 hover:text-white w-14 h-14 rounded-full text-2xl shadow-md"><i class="fas fa-arrow-left"></i></button>
-            <button @click="nextGas" class="bg-white hover:bg-red-600 text-gray-700 hover:text-white w-14 h-14 rounded-full text-2xl shadow-md"><i class="fas fa-arrow-right"></i></button>
+          <div v-if="gasolineCarsData.length > 1" class="d-flex justify-content-center gap-3 mt-5">
+            <button @click="prevGas" class="btn-nav-circle"><i class="fas fa-arrow-left"></i></button>
+            <span class="d-flex align-items-center text-secondary small">{{ gasIndex + 1 }} / {{ gasolineCarsData.length }}</span>
+            <button @click="nextGas" class="btn-nav-circle"><i class="fas fa-arrow-right"></i></button>
           </div>
         </template>
-        <div v-else class="text-center p-12 text-gray-500">Đang tải dữ liệu xe xăng...</div>
+        <div v-else class="text-center py-5 text-secondary">
+          <div class="spinner-border text-danger mb-3" role="status"></div>
+          <p>Đang tải dữ liệu xe xăng...</p>
+        </div>
       </div>
     </section>
 
-    <section id="service-showcase" class="py-20 md:py-28 overflow-hidden bg-white">
-      <div class="container mx-auto px-6">
-         <div class="text-center mb-16 reveal">
-            <h2 class="text-3xl md:text-5xl font-bold text-blue-700 mb-4">GIẢI PHÁP VẬN TẢI XANH</h2>
-            <p class="text-gray-600 text-lg max-w-2xl mx-auto">Dành cho doanh nghiệp kinh doanh dịch vụ vận tải tiên phong.</p>
+    <!-- Service Cars -->
+    <section id="service-showcase" class="py-5 py-md-7 bg-white overflow-hidden">
+      <div class="container">
+        <div class="text-center mb-5 reveal">
+          <span class="section-badge section-badge--blue text-uppercase">Vận Tải</span>
+          <h2 class="display-5 fw-bold text-primary mt-2 mb-3">GIẢI PHÁP VẬN TẢI XANH</h2>
+          <p class="text-secondary fs-5 mx-auto" style="max-width:560px">Dành cho doanh nghiệp kinh doanh dịch vụ vận tải tiên phong.</p>
         </div>
-        
+
         <template v-if="serviceCarsData.length > 0">
-          <div class="product-showcase grid grid-cols-1 lg:grid-cols-2 gap-y-12 lg:gap-x-8 items-center reveal">
-            <div class="product-image">
-              <img :src="currentSerCar.image" alt="Car Image" class="w-full rounded-lg shadow-2xl transition-transform duration-500 hover:scale-105">
+          <div class="row align-items-center g-5 reveal">
+            <div class="col-12 col-lg-6">
+              <div class="car-image-wrap">
+              <img :src="getImageUrl(currentSerCar.firstImageUrl)" :alt="currentSerCar.name" class="img-fluid rounded-4 shadow-lg car-img">              </div>
             </div>
-            <div class="product-details">
-              <h3 class="text-4xl font-extrabold text-blue-800 mb-4">{{ currentSerCar.name }}</h3>
-              <p class="text-3xl font-bold text-blue-600 mb-6">{{ currentSerCar.price ? currentSerCar.price.toLocaleString() + ' VNĐ' : 'Liên hệ' }}</p>
-              
-              <div class="grid grid-cols-2 gap-x-3 gap-y-4 text-lg mb-8">
-                <div class="flex items-center text-gray-700"><i class="fas fa-bolt text-yellow-500 w-6 mr-3"></i><span>{{ currentSerCar.range || 'N/A' }}</span></div>
-                <div class="flex items-center text-gray-700"><i class="fas fa-taxi text-yellow-500 w-6 mr-3"></i><span>Taxi/Dịch vụ</span></div>
-              </div>
-              
-              <div class="flex flex-col sm:flex-row gap-4">
-                 <router-link to="/consultation" class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-8 rounded-full text-center shadow-md">Liên Hệ Ngay</router-link>
-              </div>
-            </div>
+<div class="col-12 col-lg-6">
+  <h3 class="display-6 fw-bold text-primary-dark mb-2">{{ currentSerCar.name }}</h3>
+  
+  <p class="fs-3 fw-bold text-primary mb-4">{{ formatPrice(currentSerCar.price) }}</p>
+  
+  <div class="row g-3 mb-4">
+    <div class="col-6">
+      <div class="spec-chip fw-bold text-success border-success bg-success-soft">
+        <i class="fas fa-check-circle me-2"></i>
+        {{ currentSerCar.battery }} KWH
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="spec-chip">
+        <i class="fas fa-taxi text-warning me-2"></i>
+        {{ currentSerCar.modelName }}
+      </div>
+    </div>
+  </div>
+  
+  <router-link to="/consultation" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow">
+    Liên Hệ Tư Vấn
+  </router-link>
+</div>
           </div>
-          <div v-if="serviceCarsData.length > 1" class="flex justify-center mt-12 space-x-4">
-            <button @click="prevSer" class="bg-white hover:bg-blue-600 text-gray-700 hover:text-white w-14 h-14 rounded-full text-2xl shadow-md"><i class="fas fa-arrow-left"></i></button>
-            <button @click="nextSer" class="bg-white hover:bg-blue-600 text-gray-700 hover:text-white w-14 h-14 rounded-full text-2xl shadow-md"><i class="fas fa-arrow-right"></i></button>
+          <div v-if="serviceCarsData.length > 1" class="d-flex justify-content-center gap-3 mt-5">
+            <button @click="prevSer" class="btn-nav-circle"><i class="fas fa-arrow-left"></i></button>
+            <span class="d-flex align-items-center text-secondary small">{{ serIndex + 1 }} / {{ serviceCarsData.length }}</span>
+            <button @click="nextSer" class="btn-nav-circle"><i class="fas fa-arrow-right"></i></button>
           </div>
         </template>
-        <div v-else class="text-center p-12 text-gray-500">Đang tải dữ liệu xe dịch vụ...</div>
+        <div v-else class="text-center py-5 text-secondary">
+          <div class="spinner-border text-primary mb-3" role="status"></div>
+          <p>Đang tải dữ liệu xe dịch vụ...</p>
+        </div>
       </div>
     </section>
 
-    <section id="accessories" class="py-20 md:py-28 bg-gray-50">
-      <div class="container mx-auto px-6">
-         <div class="text-center mb-16 reveal">
-            <h2 class="text-3xl md:text-5xl font-bold text-gray-900 mb-4">Phụ Kiện Chính Hãng</h2>
-            <p class="text-gray-600 text-lg max-w-2xl mx-auto">Nâng tầm phong cách và cá nhân hóa trải nghiệm lái xe của bạn.</p>
+    <!-- Accessories 
+    <section id="accessories" class="py-5 py-md-7 bg-light">
+      <div class="container">
+        <div class="text-center mb-5 reveal">
+          <span class="section-badge text-uppercase">Phụ Kiện</span>
+          <h2 class="display-5 fw-bold text-dark mt-2 mb-3">Phụ Kiện Chính Hãng</h2>
+          <p class="text-secondary fs-5 mx-auto" style="max-width:560px">Nâng tầm phong cách và cá nhân hóa trải nghiệm lái xe của bạn.</p>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-          <div 
+        <div class="row g-4">
+          <div
             v-for="(item, index) in featuredAccessories"
-            :key="item.id || index" 
-            class="bg-white rounded-lg shadow-md overflow-hidden reveal"
+            :key="item.id ?? index"
+            class="col-6 col-md-3 reveal"
           >
-            <div class="overflow-hidden aspect-square">
-              <img :src="item.image" :alt="item.name" class="w-full h-full object-cover">
-            </div>
-            <div class="p-4">
-              <h4 class="font-bold text-gray-800 truncate">{{ item.name }}</h4>
-              <p class="text-blue-600 font-semibold">{{ item.gia }}</p>
+            <div class="card acc-card h-100 border-0 shadow-sm">
+              <div class="acc-img-wrap">
+                <img :src="item.image" :alt="item.name" class="card-img-top acc-img">
+              </div>
+              <div class="card-body">
+                <h6 class="card-title fw-bold text-truncate mb-1">{{ item.name }}</h6>
+                <p class="text-primary fw-semibold mb-0">{{ item.gia }}</p>
+              </div>
             </div>
           </div>
         </div>
-        <div class="text-center mt-12 reveal">
-            <router-link to="/accessories" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-3 px-8 rounded-full text-center shadow-sm">Xem Thêm</router-link>
+        <div class="text-center mt-5 reveal">
+          <router-link to="#" class="btn btn-outline-dark btn-lg rounded-pill px-5 fw-bold">Xem Thêm Phụ Kiện</router-link>
+        </div>
+      </div>
+    </section>
+-->
+    <!-- Battery & Charging -->
+    <section id="battery-charging" class="py-5 py-md-7 bg-white">
+      <div class="container">
+        <div class="row g-5 align-items-center reveal">
+          <div class="col-12 col-lg-6">
+            <span class="section-badge text-uppercase">Hạ Tầng</span>
+            <h2 class="display-5 fw-bold text-dark mt-2 mb-4">Pin & Trạm Sạc</h2>
+            <p class="text-secondary fs-5 mb-4">Hệ sinh thái xe điện toàn diện của VinFast đảm bảo mọi hành trình luôn tràn đầy năng lượng.</p>
+            <ul class="list-unstyled feature-list">
+              <li class="d-flex align-items-start gap-3 mb-4">
+                <span class="feature-icon bg-primary-soft text-primary"><i class="fas fa-charging-station"></i></span>
+                <div>
+                  <h5 class="fw-bold mb-1">Trạm sạc toàn quốc</h5>
+                  <p class="text-secondary mb-0">Phủ khắp 63 tỉnh thành trên toàn quốc.</p>
+                </div>
+              </li>
+              <li class="d-flex align-items-start gap-3">
+                <span class="feature-icon bg-success-soft text-success"><i class="fas fa-battery-full"></i></span>
+                <div>
+                  <h5 class="fw-bold mb-1">Công nghệ Pin LFP</h5>
+                  <p class="text-secondary mb-0">An toàn tuyệt đối, tuổi thọ cao và ổn định.</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div class="col-12 col-lg-6">
+            <img src="/assets/image/pk/pin-tramsac-1_1660273470.png" alt="Trạm sạc VinFast" class="img-fluid rounded-4 shadow-lg w-100 object-fit-cover">
+          </div>
         </div>
       </div>
     </section>
 
-    <section id="battery-charging" class="py-20 md:py-28 bg-white">
-        <div class="container mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center reveal">
-            <div class="text-content">
-                <h2 class="text-3xl md:text-5xl font-bold text-gray-900 mb-6">Pin & Trạm Sạc</h2>
-                <p class="text-gray-600 text-lg mb-6">Hệ sinh thái xe điện toàn diện của VinFast đảm bảo mọi hành trình của bạn luôn tràn đầy năng lượng.</p>
-                <ul class="space-y-4 text-gray-700">
-                    <li class="flex items-start"><i class="fas fa-check-circle text-blue-500 mt-1 mr-3"></i><div><h4 class="font-bold">Trạm sạc toàn quốc</h4><p>Phủ khắp 63 tỉnh thành.</p></div></li>
-                    <li class="flex items-start"><i class="fas fa-check-circle text-blue-500 mt-1 mr-3"></i><div><h4 class="font-bold">Công nghệ Pin LFP</h4><p>An toàn và tuổi thọ cao.</p></div></li>
-                </ul>
-            </div>
-            <div class="image-content">
-                <img src="/assets/image/pk/pin-tramsac-1_1660273470.png" alt="Trạm sạc VinFast" class="rounded-lg shadow-2xl w-full h-full object-cover">
-            </div>
+    <!-- After Sales -->
+    <section id="after-sales" class="py-5 py-md-7 bg-light">
+      <div class="container">
+        <div class="text-center mb-5 reveal">
+          <span class="section-badge text-uppercase">Hậu Mãi</span>
+          <h2 class="display-5 fw-bold text-dark mt-2 mb-3">Dịch Vụ Hậu Mãi Xuất Sắc</h2>
+          <p class="text-secondary fs-5 mx-auto" style="max-width:560px">Cam kết đồng hành cùng khách hàng trong suốt quá trình sử dụng xe.</p>
         </div>
+        <div class="row g-4">
+          <div class="col-12 col-md-4 reveal">
+            <div class="card service-card h-100 border-0 shadow-sm text-center p-4">
+              <div class="service-icon text-primary mb-4"><i class="fas fa-shield-alt fa-3x"></i></div>
+              <h4 class="fw-bold mb-3">Bảo Hành 10 Năm</h4>
+              <p class="text-secondary mb-0">Chính sách bảo hành dẫn đầu thị trường, mang lại sự an tâm tuyệt đối.</p>
+            </div>
+          </div>
+          <div class="col-12 col-md-4 reveal" style="transition-delay:100ms">
+            <div class="card service-card h-100 border-0 shadow-sm text-center p-4">
+              <div class="service-icon text-warning mb-4"><i class="fas fa-tools fa-3x"></i></div>
+              <h4 class="fw-bold mb-3">Cứu Hộ 24/7</h4>
+              <p class="text-secondary mb-0">Dịch vụ cứu hộ miễn phí trong suốt thời gian bảo hành, mọi lúc mọi nơi.</p>
+            </div>
+          </div>
+          <div class="col-12 col-md-4 reveal" style="transition-delay:200ms">
+            <div class="card service-card h-100 border-0 shadow-sm text-center p-4">
+              <div class="service-icon text-success mb-4"><i class="fas fa-charging-station fa-3x"></i></div>
+              <h4 class="fw-bold mb-3">Sạc Lưu Động</h4>
+              <p class="text-secondary mb-0">Dịch vụ sạc pin lưu động giúp bạn yên tâm trên mọi cung đường.</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <section id="after-sales" class="py-20 md:py-28 bg-gray-50">
-        <div class="container mx-auto px-6">
-            <div class="text-center mb-16 reveal">
-                <h2 class="text-3xl md:text-5xl font-bold text-gray-900 mb-4">Dịch Vụ Hậu Mãi Xuất Sắc</h2>
-                <p class="text-gray-600 text-lg max-w-2xl mx-auto">Cam kết đồng hành cùng khách hàng trong suốt quá trình sử dụng xe.</p>
+    <!-- Why Us -->
+    <section id="why-us" class="py-5 py-md-7 bg-white">
+      <div class="container">
+        <div class="row g-5 align-items-center reveal">
+          <div class="col-12 col-lg-6 order-lg-2">
+            <span class="section-badge text-uppercase">Tinh Thần Việt</span>
+            <h2 class="display-5 fw-bold text-dark mt-2 mb-4">Mãnh Liệt Tinh Thần Việt Nam</h2>
+            <p class="text-secondary fs-5 mb-4">VinFast không chỉ là một chiếc xe, mà là niềm tự hào của người Việt, vươn tầm thế giới.</p>
+            <div class="d-flex flex-column gap-4">
+              <div class="d-flex align-items-start gap-3">
+                <span class="feature-icon bg-primary-soft text-primary"><i class="fas fa-globe"></i></span>
+                <div>
+                  <h5 class="fw-bold mb-1">Đẳng Cấp Quốc Tế</h5>
+                  <p class="text-secondary mb-0">Được công nhận tại Mỹ, Châu Âu và các thị trường khó tính nhất.</p>
+                </div>
+              </div>
+              <div class="d-flex align-items-start gap-3">
+                <span class="feature-icon bg-success-soft text-success"><i class="fas fa-leaf"></i></span>
+                <div>
+                  <h5 class="fw-bold mb-1">Cam Kết Xanh</h5>
+                  <p class="text-secondary mb-0">Tiên phong trong cuộc cách mạng giao thông xanh vì một tương lai bền vững.</p>
+                </div>
+              </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-10 text-center">
-                <div class="bg-white p-8 rounded-lg shadow-lg reveal">
-                    <div class="text-blue-500 mb-6"><i class="fas fa-shield-alt fa-4x"></i></div>
-                    <h3 class="text-2xl font-bold text-gray-900 mb-3">Bảo Hành 10 Năm</h3>
-                    <p class="text-gray-600">Chính sách bảo hành dẫn đầu thị trường, mang lại sự an tâm tuyệt đối.</p>
-                </div>
-                <div class="bg-white p-8 rounded-lg shadow-lg reveal" style="transition-delay: 150ms;">
-                    <div class="text-blue-500 mb-6"><i class="fas fa-tools fa-4x"></i></div>
-                    <h3 class="text-2xl font-bold text-gray-900 mb-3">Cứu Hộ 24/7</h3>
-                    <p class="text-gray-600">Dịch vụ cứu hộ miễn phí trong suốt thời gian bảo hành, hỗ trợ mọi lúc mọi nơi.</p>
-                </div>
-                <div class="bg-white p-8 rounded-lg shadow-lg reveal" style="transition-delay: 300ms;">
-                    <div class="text-blue-500 mb-6"><i class="fas fa-charging-station fa-4x"></i></div>
-                    <h3 class="text-2xl font-bold text-gray-900 mb-3">Sạc Lưu Động</h3>
-                    <p class="text-gray-600">Dịch vụ sạc pin lưu động giúp bạn yên tâm trên mọi cung đường.</p>
-                </div>
-            </div>
+          </div>
+          <div class="col-12 col-lg-6 order-lg-1">
+            <img src="/assets/image/backgroup/vinclub.webp" alt="VinFast Community" class="img-fluid rounded-4 shadow-lg w-100 object-fit-cover">
+          </div>
         </div>
+      </div>
     </section>
-
-    <section id="why-us" class="py-20 md:py-28 bg-white">
-        <div class="container mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center reveal">
-             <div class="image-content order-last lg:order-first">
-                <img src="/assets/image/backgroup/vinclub.webp" alt="VinFast Community" class="rounded-lg shadow-2xl w-full h-full object-cover">
-            </div>
-            <div class="text-content">
-                <h2 class="text-3xl md:text-5xl font-bold text-gray-900 mb-6">Mãnh Liệt Tinh Thần Việt Nam</h2>
-                <p class="text-gray-600 text-lg mb-6">VinFast không chỉ là một chiếc xe, mà là niềm tự hào của người Việt, vươn tầm thế giới.</p>
-                <div class="space-y-6">
-                    <div class="flex items-start">
-                        <div class="bg-blue-100 p-3 rounded-full mr-4"><i class="fas fa-globe text-blue-600 text-xl"></i></div>
-                        <div><h4 class="font-bold text-xl">Đẳng Cấp Quốc Tế</h4><p class="text-gray-600">Sản phẩm được công nhận tại các thị trường khó tính nhất như Mỹ, Châu Âu.</p></div>
-                    </div>
-                    <div class="flex items-start">
-                        <div class="bg-green-100 p-3 rounded-full mr-4"><i class="fas fa-leaf text-green-600 text-xl"></i></div>
-                        <div><h4 class="font-bold text-xl">Cam Kết Xanh</h4><p class="text-gray-600">Tiên phong trong cuộc cách mạng giao thông xanh vì một tương lai bền vững.</p></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
   </main>
 </template>
 
 <style scoped>
-/* CSS cho Slider Banner */
+.bg-danger-soft { background: #fee2e2 !important; }
+.border-danger { border-color: #ef4444 !important; }
+.border-success { border-color: #22c55e !important; }
+/* ===== HERO SLIDER ===== */
+#hero-slider {
+  position: relative;
+  height: 100vh;
+  min-height: 480px;
+  background: #000;
+}
 .slider-image {
   position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  transition: opacity 1s ease-in-out;
+  transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.slider-image.active {
-  opacity: 1;
+.slider-image.active { opacity: 1; }
+
+.slider-dots {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+.slider-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.45);
+  cursor: pointer;
+  transition: all 0.3s;
+  padding: 0;
+}
+.slider-dot.active {
+  background: #fff;
+  transform: scale(1.35);
 }
 
-/* Hiệu ứng cuộn Reveal */
+/* ===== SECTION SPACING ===== */
+.py-md-7 { padding-top: 5rem !important; padding-bottom: 5rem !important; }
+
+/* ===== SECTION BADGE ===== */
+.section-badge {
+  display: inline-block;
+  background: #e8f0fe;
+  color: #1a56db;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  padding: 5px 14px;
+  border-radius: 20px;
+}
+.section-badge--blue { background: #dbeafe; color: #1d4ed8; }
+
+/* ===== CAR IMAGE ===== */
+.car-image-wrap { position: relative; overflow: hidden; border-radius: 1rem; }
+.car-img {
+  width: 100%;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.car-image-wrap:hover .car-img { transform: scale(1.04); }
+
+/* ===== SPEC CHIP ===== */
+.spec-chip {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 50px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  transition: border-color 0.2s, background 0.2s;
+}
+.spec-chip:hover { background: #e8f0fe; border-color: #93c5fd; }
+
+/* ===== NAV CIRCLE ===== */
+.btn-nav-circle {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  border: 2px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.25s;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.btn-nav-circle:hover { background: #2563eb; border-color: #2563eb; color: #fff; transform: scale(1.08); }
+
+/* ===== ACCESSORIES ===== */
+.acc-card { border-radius: 1rem !important; transition: transform 0.3s, box-shadow 0.3s; overflow: hidden; }
+.acc-card:hover { transform: translateY(-6px); box-shadow: 0 12px 32px rgba(0,0,0,0.13) !important; }
+.acc-img-wrap { overflow: hidden; aspect-ratio: 1; background: #f8f9fa; }
+.acc-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+.acc-card:hover .acc-img { transform: scale(1.07); }
+
+/* ===== SERVICE CARDS ===== */
+.service-card { border-radius: 1rem !important; transition: transform 0.3s, box-shadow 0.3s; }
+.service-card:hover { transform: translateY(-6px); box-shadow: 0 12px 32px rgba(0,0,0,0.12) !important; }
+.service-icon { font-size: 1.1rem; }
+
+/* ===== FEATURE ICON ===== */
+.feature-icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.bg-primary-soft { background: #e8f0fe; }
+.bg-success-soft { background: #dcfce7; }
+
+/* ===== REVEAL ANIMATION ===== */
 .reveal {
   opacity: 0;
-  transform: translateY(30px);
-  transition: all 0.8s ease-out;
+  transform: translateY(36px);
+  transition: opacity 0.75s ease-out, transform 0.75s ease-out;
 }
 .reveal.visible {
   opacity: 1;

@@ -20,7 +20,7 @@ public class CarVariantUpdateRequest {
 
     // Tất cả thông số kỹ thuật cho phép cập nhật
     private Integer seatCapacity;
-    private String fuelType;
+
     private Integer length;
     private Integer width;
     private Integer height;

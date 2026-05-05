@@ -1,7 +1,7 @@
 package com.Nhom7.DACN_KTPM.controller;
 
 
-import com.Nhom7.DACN_KTPM.dto.request.ApiResponse;
+import com.Nhom7.DACN_KTPM.dto.request.ApiRequest;
 import com.Nhom7.DACN_KTPM.dto.request.UserCreationRequest;
 import com.Nhom7.DACN_KTPM.dto.request.UserUpdateRequest;
 import com.Nhom7.DACN_KTPM.dto.response.UserResponse;
@@ -24,42 +24,42 @@ public class UserController {
     UserService userService;
 
     @PostMapping
-    ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request) {
-        return ApiResponse.<UserResponse>builder()
+    ApiRequest<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request) {
+        return ApiRequest.<UserResponse>builder()
                 .result(userService.createUser(request))
                 .build();
     }
 
     @GetMapping
-    ApiResponse<List<UserResponse>> getUsers() {
-        return ApiResponse.<List<UserResponse>>builder()
+    ApiRequest<List<UserResponse>> getUsers() {
+        return ApiRequest.<List<UserResponse>>builder()
                 .result(userService.getUsers())
                 .build();
     }
 
     @GetMapping("/{userId}")
-    ApiResponse<UserResponse> getUser(@PathVariable("userId") String userId) {
-        return ApiResponse.<UserResponse>builder()
+    ApiRequest<UserResponse> getUser(@PathVariable("userId") String userId) {
+        return ApiRequest.<UserResponse>builder()
                 .result(userService.getUser(userId))
                 .build();
     }
 
     @GetMapping("/my-info")
-    ApiResponse<UserResponse> getMyInfo() {
-        return ApiResponse.<UserResponse>builder()
+    ApiRequest<UserResponse> getMyInfo() {
+        return ApiRequest.<UserResponse>builder()
                 .result(userService.getMyInfo())
                 .build();
     }
 
     @DeleteMapping("/{userId}")
-    ApiResponse<String> deleteUser(@PathVariable String userId) {
+    ApiRequest<String> deleteUser(@PathVariable String userId) {
         userService.deleteUser(userId);
-        return ApiResponse.<String>builder().result("User has been deleted").build();
+        return ApiRequest.<String>builder().result("User has been deleted").build();
     }
 
     @PutMapping("/{userId}")
-    ApiResponse<UserResponse> updateUser(@PathVariable String userId, @RequestBody UserUpdateRequest request) {
-        return ApiResponse.<UserResponse>builder()
+    ApiRequest<UserResponse> updateUser(@PathVariable String userId, @RequestBody UserUpdateRequest request) {
+        return ApiRequest.<UserResponse>builder()
                 .result(userService.updateUser(userId, request))
                 .build();
     }

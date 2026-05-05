@@ -1,0 +1,41 @@
+@startuml
+!theme plain
+skinparam ActivityBackgroundColor #FFFFFF
+skinparam ActivityBorderColor #333333
+skinparam ArrowColor #333333
+skinparam DefaultFontName Arial
+skinparam ActivityBorderThickness 1
+
+title Biểu đồ Luồng Nghiệp vụ\nHệ thống  Mua Xe Trực tuyến tích hợp AI
+
+start
+
+:Khách hàng giao tiếp qua Chatbot\nbằng ngôn ngữ tự nhiên;
+
+:AI tự động bóc tách các đặc tính ưu tiên\n(ngân sách, số chỗ ngồi, sở thích lái...);
+
+:Áp dụng thuật toán Cosine Similarity để so khớp\n"vector nhu cầu" với cơ sở dữ liệu xe;
+
+:Hệ thống trả về kết quả gợi ý\nkèm chỉ số Match Score (%);
+
+:Khách hàng chọn mẫu xe ưng ý;
+
+:Tích hợp công cụ dự toán trả góp vào mẫu xe;
+
+while (Khách hàng điều chỉnh dự toán?) is (Có)
+  :Thay đổi thông số (tỷ lệ trả trước, kỳ hạn...);
+  :Cập nhật dữ liệu tính toán và lịch trả nợ\ntheo thời gian thực (real-time);
+endwhile (Không, chốt phương án)
+
+:Khách hàng ký hợp đồng điện tử;
+
+:Thanh toán số tiền trả trước\nqua cổng trực tuyến (VNPay);
+
+:Hệ thống tự động tạo hợp đồng;
+
+:Hệ thống khóa xe trong kho\nvà gán mã số khung (VIN);
+
+:Hoàn tất giao dịch;
+
+stop
+@enduml

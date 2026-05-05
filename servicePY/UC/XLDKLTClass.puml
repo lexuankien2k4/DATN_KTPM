@@ -1,0 +1,52 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam style strictuml
+skinparam packageStyle rectangle
+
+title Biểu đồ lớp: Kết nối Quản lý Tư vấn và Nhân viên
+
+package "Domain Entities" {
+    class User {
+        - Long id
+        - String fullName
+        - String email
+        - String role
+        - Boolean isActive
+        --
+        + getFullName(): String
+        + getRole(): String
+    }
+
+    class Consulation {
+        - Long id
+        - String customerName
+        - String phoneNumber
+        - LocalDateTime appointmentDate
+        - String status
+        - String notes
+        - Integer rating
+        --
+        + setNotes(notes: String): void
+        + setStatus(status: String): void
+        + setRating(rating: Integer): void
+    }
+}
+
+package "Controllers" {
+    class ConsulationController <<Control>> {
+        --
+        + getAllTestDrives(): List<Consulation>
+        + getTestDriveDetail(id: Long): Consulation
+        + updateTestDriveStatus(id: Long, notes: String, rating: Integer): void
+    }
+}
+
+' Mối quan hệ kết nối (Association)
+' Một User (Nhân viên) có thể quản lý nhiều yêu cầu Tư vấn
+User "1" -- "0..*" Consulation : "xử lý/quản lý"
+
+' Controller điều phối các thực thể
+ConsulationController ..> Consulation : "điều phối"
+ConsulationController ..> User : "xác thực"
+
+@enduml

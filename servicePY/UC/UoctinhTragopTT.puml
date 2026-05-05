@@ -1,0 +1,64 @@
+@startuml
+skinparam Style strictuml
+autonumber
+skinparam sequenceMessageAlign center
+
+' Định nghĩa các thành phần theo đúng ký hiệu BCE
+actor "Người dùng" as User
+boundary "GDUocTinh : Boundary" as UI
+control "EstimationControl : Control" as Ctrl
+control "CarVariantControl : Control" as VRepo
+control "LoanPolicyControl : Control" as PRepo
+entity "CarVariant : Entity" as ENT_V
+entity "LoanPolicy : Entity" as ENT_P
+
+' --- LUỒNG SỰ KIỆN CƠ BẢN ---
+
+' Bước 1 & 2: Mở mục dự toán và hiện xe phổ biến
+User -> UI: . Mở mục "Dự toán chi phí trả góp"
+activate UI
+UI -> Ctrl: yêu cầu dữ liệu khởi tạo
+activate Ctrl
+Ctrl -> VRepo: findTopByOrderByPopularityDesc()
+activate VRepo
+VRepo -> ENT_V: getInfo()
+VRepo --> Ctrl: trả về thông tin xe & hình ảnh
+deactivate VRepo
+Ctrl --> UI: . Hiển thị mẫu xe phổ biến nhất để tham khảo
+deactivate Ctrl
+
+' Bước 3 & 4: Chọn mẫu xe và cập nhật giá
+User -> UI: . Chọn mẫu xe và phiên bản cụ thể
+UI -> Ctrl: getVariantDetails(variantId)
+activate Ctrl
+Ctrl -> VRepo: findById(variantId)
+activate VRepo
+VRepo -> ENT_V: getPrice()
+VRepo --> Ctrl: trả về giá tiền & ảnh chi tiết
+deactivate VRepo
+Ctrl --> UI: . Cập nhật lại giá và hình ảnh đúng phiên bản
+deactivate Ctrl
+
+' Bước 5 & 6: Tính toán dự toán
+User -> UI: . Chọn số tiền trả trước, thời gian vay, ngân hàng
+UI -> Ctrl: calculateInstallment(prepayment, term, bankId)
+activate Ctrl
+
+' Truy xuất lãi suất ưu đãi từ chính sách ngân hàng
+Ctrl -> PRepo: findByBankId(bankId)
+activate PRepo
+PRepo -> ENT_P: getPreferentialRate()
+PRepo --> Ctrl: trả về lãi suất ưu đãi & biên độ
+deactivate PRepo
+
+' Logic tính toán tại Control (Service)
+Ctrl -> Ctrl: . thucHienTinhToanPMT()
+Ctrl --> UI: Hiển thị số tiền gốc và lãi phải trả mỗi tháng
+deactivate Ctrl
+
+' Bước 7: Thay đổi lựa chọn
+User -> UI: . Thay đổi các tùy chọn để tìm phương án phù hợp
+UI-> UI: Cập nhật lại thông tin và tính toán lại
+deactivate UI
+
+@enduml

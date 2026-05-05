@@ -4,52 +4,37 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-// --- Logic Sticky Header (Giữ nguyên) ---
 const isScrolled = ref(false)
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50
 }
 
-// --- Logic Quản lý Trạng thái Đăng nhập (MỚI) ---
 const isLoggedIn = ref(false)
 const currentUser = ref(null)
 
-// Hàm kiểm tra đăng nhập (đọc từ localStorage)
 const checkLoginStatus = () => {
   const token = localStorage.getItem('authToken')
-  const userStr = localStorage.getItem('user') // Giả sử bạn lưu info user vào đây lúc login
-  
+  const userStr = localStorage.getItem('user')
   if (token) {
     isLoggedIn.value = true
-    if (userStr) {
-      currentUser.value = JSON.parse(userStr)
-    }
+    if (userStr) currentUser.value = JSON.parse(userStr)
   } else {
     isLoggedIn.value = false
     currentUser.value = null
   }
 }
 
-// Hàm Đăng xuất
 const handleLogout = () => {
-  // Xóa token và thông tin user
   localStorage.removeItem('authToken')
   localStorage.removeItem('user')
-  
-  // Cập nhật trạng thái
   isLoggedIn.value = false
   currentUser.value = null
-  
-  // Chuyển về trang login hoặc trang chủ
   router.push('/login')
 }
 
-// --- Lifecycle Hooks ---
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
-  checkLoginStatus() // Kiểm tra ngay khi load header
-  
-  // (Tùy chọn) Lắng nghe sự kiện storage để đồng bộ giữa các tab
+  checkLoginStatus()
   window.addEventListener('storage', checkLoginStatus)
 })
 
@@ -58,105 +43,251 @@ onUnmounted(() => {
   window.removeEventListener('storage', checkLoginStatus)
 })
 
-// --- Logic Nút Bấm Menu ---
 const emit = defineEmits(['toggle-menu'])
-
 function onToggleClick() {
   emit('toggle-menu')
 }
 </script>
 
 <template>
-  <header 
-    id="main-header" 
-    class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-    :class="{ 'header-scrolled': isScrolled, 'bg-white shadow-md': isScrolled, 'bg-transparent': !isScrolled }"
+  <header
+    id="main-header"
+    class="header-fixed transition-header"
+    :class="{ 'header-scrolled': isScrolled }"
   >
-    <div class="w-full px-6 py-4 flex justify-between items-center">
-      
-      <router-link to="/" class="text-2xl font-extrabold text-gray-800 tracking-wider flex items-center gap-2">
-        <span>Vin<span class="text-blue-600">Auto</span></span>
-      </router-link>
+    <div class="container-fluid px-4">
+      <div class="d-flex justify-content-between align-items-center py-3">
 
-      <nav class="hidden lg:flex items-center space-x-5">
-        <router-link to="/#ev-showcase" class="text-gray-900 hover:text-blue-600 font-medium transition-colors duration-300">Xe điện</router-link>
-        <router-link to="/#gas-showcase" class="text-gray-900 hover:text-blue-600 font-medium transition-colors duration-300">Xe xăng</router-link>
-        <router-link to="/#service-showcase" class="text-gray-900 hover:text-blue-600 font-medium transition-colors duration-300">Xe dịch vụ</router-link>
-        <router-link to="/#accessories" class="text-gray-900 hover:text-blue-600 font-medium transition-colors duration-300">Phụ kiện</router-link>
-        <router-link to="/#battery-charging" class="text-gray-900 hover:text-blue-600 font-medium transition-colors duration-300">Pin & Sạc</router-link>
-        <router-link to="/#after-sales" class="text-gray-900 hover:text-blue-600 font-medium transition-colors duration-300">Hậu mãi</router-link>
-        <router-link to="/#why-us" class="text-gray-900 hover:text-blue-600 font-medium transition-colors duration-300">Về VinAuto</router-link>
-      </nav>
+        <!-- Logo -->
+        <router-link to="/" class="brand-logo text-decoration-none d-flex align-items-center gap-2">
+          <div class="logo-icon">
+            <i class="fas fa-car"></i>
+          </div>
+          <span class="brand-text">Vin<span class="brand-accent">Auto</span></span>
+        </router-link>
 
-      <div class="flex items-center gap-4">
-        
-        <div class="hidden md:flex items-center gap-3 mr-2">
-          
-          <template v-if="isLoggedIn">
-            <div class="flex items-center gap-2">
-                <span class="text-sm font-semibold text-gray-700">
-                  Chào, {{ currentUser?.lastName || 'Khách' }}
-                </span>
-                <button 
-                  @click="handleLogout" 
-                  class="text-sm text-red-500 hover:text-red-700 font-medium transition-colors"
-                >
-                  (Đăng xuất)
+        <!-- Nav Desktop -->
+<!-- Nav Desktop (Chuẩn Vue.js) -->
+<!-- Nav Desktop -->
+<nav class="d-none d-xl-flex align-items-center gap-1">
+  <a href="/#ev-showcase" class="nav-pill">Xe điện</a>
+  
+  <!-- SỬA Ở ĐÂY: Đổi gas-showcase thành gasoline-showcase -->
+  <a href="/#gasoline-showcase" class="nav-pill">Xe xăng</a>
+  
+  <a href="/#service-showcase" class="nav-pill">Xe dịch vụ</a>
+  <a href="/#accessories" class="nav-pill">Phụ kiện</a>
+  <a href="/#battery-charging" class="nav-pill">Pin & Sạc</a>
+  <a href="/#after-sales" class="nav-pill">Hậu mãi</a>
+  <a href="/#why-us" class="nav-pill">Về VinAuto</a>
+</nav>
+
+        <!-- Actions -->
+        <div class="d-flex align-items-center gap-3">
+          <div class="d-none d-md-flex align-items-center gap-2">
+
+            <template v-if="isLoggedIn">
+              <div class="d-flex align-items-center gap-2">
+                <div class="user-badge">
+                  <i class="fas fa-user-circle me-1"></i>
+                  <span class="fw-semibold">{{ currentUser?.lastName || 'Khách' }}</span>
+                </div>
+                <button @click="handleLogout" class="btn-logout">
+                  <i class="fas fa-sign-out-alt"></i>
                 </button>
-            </div>
-            
-            <router-link 
-              v-if="currentUser?.roles?.some(r => r.name === 'ADMIN')" 
-              to="/admin/dashboard"
-              class="text-gray-900 hover:text-blue-600" title="Trang quản trị"
-            >
-              <i class="fas fa-user-cog text-xl"></i>
-            </router-link>
-          </template>
+              </div>
+              <router-link
+                v-if="currentUser?.roles?.some(r => r.name === 'ADMIN')"
+                to="/admin/dashboard"
+                class="btn-admin"
+                title="Trang quản trị"
+              >
+                <i class="fas fa-user-cog"></i>
+              </router-link>
+            </template>
 
-          <template v-else>
-            <RouterLink 
-              to="/login" 
-              class="text-gray-700 hover:text-blue-600 font-medium transition-colors"
-            >
-              Đăng nhập
-            </RouterLink>
-            <span class="text-gray-300">|</span>
-            <RouterLink 
-              to="/register" 
-              class="text-gray-700 hover:text-blue-600 font-medium transition-colors"
-            >
-              Đăng ký
-            </RouterLink>
-          </template>
+            <template v-else>
+              <RouterLink to="/login" class="btn-auth-outline">Đăng nhập</RouterLink>
+              <RouterLink to="/register" class="btn-auth-fill">Đăng ký</RouterLink>
+            </template>
+          </div>
+
+          <button @click="onToggleClick" class="btn-hamburger" aria-label="Toggle Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
         </div>
-        <RouterLink 
-          to="/consultation"
-          class="hidden md:block bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-full transition-all duration-300 shadow-md hover:shadow-lg"
-        >
-          Tư vấn
-        </RouterLink>
 
-        <button 
-          @click="onToggleClick" 
-          class="text-gray-900 hover:text-blue-600 focus:outline-none transition-colors duration-300 p-1"
-          aria-label="Toggle Menu"
-        >
-          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-          </svg>
-        </button>
       </div>
-
     </div>
   </header>
 </template>
 
 <style scoped>
-/* Thêm class này để header có nền trắng khi cuộn */
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
+
+* { font-family: 'Be Vietnam Pro', sans-serif; }
+
+.header-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1050;
+}
+
+.transition-header {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  background: transparent;
+}
+
 .header-scrolled {
-  background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.06), 0 8px 32px rgba(0,0,0,0.08);
+}
+
+/* Logo */
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(59,130,246,0.35);
+}
+
+.brand-text {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+}
+
+.brand-accent { color: #2563eb; }
+
+/* Nav pills */
+.nav-pill {
+  padding: 6px 14px;
+  border-radius: 8px;
+  color: #374151;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-pill:hover,
+.nav-pill.router-link-active {
+  background: rgba(37, 99, 235, 0.08);
+  color: #2563eb;
+}
+
+/* Auth buttons */
+.btn-auth-outline {
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1.5px solid #d1d5db;
+  color: #374151;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-auth-outline:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+  background: rgba(37,99,235,0.04);
+}
+
+.btn-auth-fill {
+  padding: 7px 18px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+}
+
+.btn-auth-fill:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(37,99,235,0.4);
+}
+
+/* User badge */
+.user-badge {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: rgba(37, 99, 235, 0.08);
+  border-radius: 20px;
+  color: #2563eb;
+  font-size: 0.875rem;
+}
+
+.btn-logout {
+  background: none;
+  border: 1.5px solid #fee2e2;
+  color: #dc2626;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.btn-logout:hover {
+  background: #fee2e2;
+}
+
+.btn-admin {
+  color: #374151;
+  text-decoration: none;
+  font-size: 1.15rem;
+  transition: color 0.2s;
+}
+.btn-admin:hover { color: #2563eb; }
+
+/* Hamburger */
+.btn-hamburger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.btn-hamburger:hover { background: rgba(0,0,0,0.05); }
+
+.btn-hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: #1f2937;
+  border-radius: 2px;
+  transition: all 0.3s ease;
 }
 </style>

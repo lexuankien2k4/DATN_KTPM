@@ -1,0 +1,45 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam style strictuml
+
+
+
+    class Contract {
+        - Long id
+        - String contractNumber
+        - String vinNumber
+        - BigDecimal depositAmount
+        - String digitalSignature
+        - ContractStatus status
+        --
+        + updateStatus(newStatus: ContractStatus): void
+        + assignVIN(vin: String): void
+        + saveSignature(sign: String): void
+    }
+
+    enum ContractStatus {
+        DRAFT
+        PAID
+        SIGNED
+        BANK_APPROVING
+        ACTIVE
+        DELIVERED
+        CANCELLED
+    }
+
+
+
+    class CarStock {
+        - String vinNumber
+        - StockStatus status
+    }
+
+
+
+
+' Relationships
+Contract "1" -- "0..1" CarStock : "gán mã VIN <"
+Contract ..> ContractStatus : "trạng thái"
+
+
+@enduml

@@ -1,0 +1,47 @@
+@startuml
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+
+actor "Khách hàng" as Customer
+boundary "TrangWeb : Boundary" as UI
+control "ConsulationController : Control" as Controller
+entity "TestDrive : Entity" as TestDrive
+
+title Biểu đồ trình tự: UC Đăng ký lái thử (Dành cho Khách hàng)
+
+
+
+== 1. Lựa chọn thông tin lái thử ==
+Customer -> UI: 1. Truy cập mục "Đăng ký lái thử"
+activate UI
+    UI -> Controller: 2. lấy danh sách xe & showroom
+    activate Controller
+    Controller --> UI: 3. trả về danh sách dữ liệu
+    deactivate Controller
+    
+    Customer -> UI: 4. Chọn mẫu xe, Tỉnh thành & Showroom
+    Customer -> UI: 5. Chọn ngày và khung giờ mong muốn
+deactivate UI
+
+== 2. Cung cấp thông tin cá nhân ==
+Customer -> UI: 6. Nhập Họ tên, Số điện thoại, Email
+activate UI
+    Customer -> UI: 7. Kiểm tra thông tin & nhấn "Gửi yêu cầu lái thử"
+    
+    UI -> Controller: 8. postRegistration(data)
+    activate Controller
+        ' Khởi tạo và lưu thông tin vào thực thể
+        create TestDrive
+        Controller -> TestDrive: 9. new TestDrive(data)
+        activate TestDrive
+            TestDrive -> TestDrive: 10. setStatus("PENDING")
+            TestDrive --> Controller: 11. xác nhận ghi nhận yêu cầu
+        deactivate TestDrive
+        
+        Controller --> UI: 12. Phản hồi đăng ký thành công
+    deactivate Controller
+    
+    UI --> Customer: 13. Hiển thị thông báo xác nhận thành công
+deactivate UI
+
+@enduml

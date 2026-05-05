@@ -33,7 +33,7 @@ public class SecurityConfig {
     JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     private static final String[] PUBLIC_ENDPOINTS = {
-            "/api/models",
+            "/api/models/**",
             "/api/models/active",
             "/api/variants",
             "/api/variants/active-variants",
@@ -53,18 +53,36 @@ public class SecurityConfig {
             "/api/public/showrooms/**",
             "/api/deposits/**",
             "/api/public/consultations/**",
+            "/api/images/**",
             "/images/**",
             "/css/**",
-            "/js/**"
+            "/js/**",
+            "/chat/**",
+            "/api/ai/**",
+            "/api/cars/images/**",
+            "/api/contracts/**",
+            "/api/variants/available/**",
+            "/api/dashboard/**"
+
     };
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
+                // 1. Tắt CSRF vì chúng ta dùng JWT/Stateless API
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(Customizer.withDefaults()) // 👈 QUAN TRỌNG: Kích hoạt CORS ở đây
+
+                // 2. Kích hoạt CORS với cấu hình từ Bean corsConfigurationSource
+                .cors(Customizer.withDefaults())
+
                 .authorizeHttpRequests(authorize -> authorize
+                        // Ưu tiên cho phép các phương thức OPTIONS (CORS Pre-flight) đi qua
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Cho phép tất cả các Endpoint công khai đã định nghĩa
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+
+                        // Mọi yêu cầu còn lại bắt buộc phải xác thực
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
@@ -80,7 +98,7 @@ public class SecurityConfig {
                 .build();
     }
 
-    // 👇 Sửa CorsFilter thành CorsConfigurationSource để Spring Security tự động dùng
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
@@ -97,7 +115,7 @@ public class SecurityConfig {
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        grantedAuthoritiesConverter.setAuthorityPrefix("");
+        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
         grantedAuthoritiesConverter.setAuthoritiesClaimName("scope");
 
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();

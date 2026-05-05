@@ -1,0 +1,37 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam style strictuml
+skinparam packageStyle rectangle
+
+
+
+    class User {
+        - Long id
+        - String fullName
+        - String role
+        --
+        + getFullName(): String
+    }
+
+    class Consulation {
+        - Long id
+        - String customerName
+        - String phoneNumber
+        - String email
+        - LocalDateTime appointmentDate
+        - String status
+        - String notes
+        - Integer rating
+        --
+        + setStatus(status: String): void
+    }
+
+
+
+
+' Mối quan hệ
+' Một nhân viên (User) có thể được phân công quản lý nhiều yêu cầu tư vấn
+User "1" -- "0..*" Consulation : "phụ trách xử lý"
+
+
+@enduml

@@ -1,12 +1,17 @@
 package com.Nhom7.DACN_KTPM.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import com.Nhom7.DACN_KTPM.entity.User;
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+
 @Entity
 @Table(name = "consultation_requests") // Khớp tên bảng trong SQL
 public class Consultation {
@@ -35,7 +40,7 @@ public class Consultation {
     @Column(name = "scheduled_at")
     private LocalDateTime scheduledAt;
 
-    // --- QUAN TRỌNG: KHỚP VỚI DATABASE ---
+
 
 
     @ManyToOne(fetch = FetchType.LAZY)

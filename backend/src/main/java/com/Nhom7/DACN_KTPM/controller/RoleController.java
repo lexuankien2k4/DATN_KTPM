@@ -1,7 +1,7 @@
 package com.Nhom7.DACN_KTPM.controller;
 
 
-import com.Nhom7.DACN_KTPM.dto.request.ApiResponse;
+import com.Nhom7.DACN_KTPM.dto.request.ApiRequest;
 import com.Nhom7.DACN_KTPM.dto.request.RoleRequest;
 import com.Nhom7.DACN_KTPM.dto.response.RoleResponse;
 import com.Nhom7.DACN_KTPM.service.RoleService;
@@ -22,22 +22,22 @@ public class RoleController {
     RoleService roleService;
 
     @PostMapping
-    ApiResponse<RoleResponse> create(@RequestBody RoleRequest request) {
-        return ApiResponse.<RoleResponse>builder()
+    ApiRequest<RoleResponse> create(@RequestBody RoleRequest request) {
+        return ApiRequest.<RoleResponse>builder()
                 .result(roleService.create(request))
                 .build();
     }
 
     @GetMapping
-    ApiResponse<List<RoleResponse>> getAll() {
-        return ApiResponse.<List<RoleResponse>>builder()
+    ApiRequest<List<RoleResponse>> getAll() {
+        return ApiRequest.<List<RoleResponse>>builder()
                 .result(roleService.getAll())
                 .build();
     }
 
     @DeleteMapping("/{role}")
-    ApiResponse<Void> delete(@PathVariable String role) {
+    ApiRequest<Void> delete(@PathVariable String role) {
         roleService.delete(role);
-        return ApiResponse.<Void>builder().build();
+        return ApiRequest.<Void>builder().build();
     }
 }

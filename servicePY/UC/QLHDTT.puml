@@ -1,0 +1,60 @@
+@startuml
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+
+actor "Khách hàng" as Customer
+actor "Quản trị viên" as Admin
+boundary "HeThong : Boundary" as UI
+control "ConsulationController : Control" as Controller
+entity "Contract : Entity" as Contract
+entity "CarStock : Entity" as Stock
+
+title Biểu đồ trình tự: UC Quản lý Hợp đồng
+
+autonumber 1 1 "<b>0"
+
+Customer -> UI: 1. Thực hiện thanh toán cọc (VNPay)
+activate UI
+    UI -> Controller: 2. callbackPaymentSuccess()
+    activate Controller
+        Controller -> Contract: 3. setStatus(PAID)
+        
+        Controller -> Stock: 4. findFirstAvailableVIN()
+        activate Stock
+            Stock -> Stock: 5. setStatus(RESERVED)
+            Stock --> Controller: 6. trả về vinNumber
+        deactivate Stock
+        
+        Controller -> Contract: 7. assignVIN(vinNumber)
+        Controller --> UI: 8. Thông báo thanh toán & gán xe thành công
+    deactivate Controller
+deactivate UI
+
+Customer -> UI: 9. Thực hiện ký điện tử
+UI -> Controller: 10. signContract(digitalSignature)
+activate Controller
+    Controller -> Contract: 11. setStatus(SIGNED) & saveSignature()
+    Controller --> UI: 12. Cập nhật trạng thái SIGNED
+deactivate Controller
+
+Admin -> UI: 13. Duyệt hồ sơ tài chính
+UI -> Controller: 14. approveContract(id)
+activate Controller
+    Controller -> Contract: 15. setStatus(ACTIVE)
+    Controller --> UI: 16. Hợp đồng chính thức có hiệu lực
+deactivate Controller
+
+Admin -> UI: 17. Thao tác Hủy hợp đồng
+activate UI
+    UI -> Controller: 18. cancelContract(id)
+    activate Controller
+        Controller -> Contract: 19. setStatus(CANCELLED)
+        Controller -> Stock: 20. releaseVIN(vinNumber)
+        activate Stock
+            Stock -> Stock: 21. setStatus(IN_STOCK)
+        deactivate Stock
+        Controller --> UI: 22. Hợp đồng đã hủy, xe đã về kho
+    deactivate Controller
+deactivate UI
+
+@enduml

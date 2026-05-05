@@ -1,16 +1,15 @@
 <script setup>
-import { ref, computed } from 'vue' // Thêm computed
-import { useRoute } from 'vue-router' // Thêm useRoute
+import { ref, computed } from 'vue' 
+import { useRoute } from 'vue-router'
 import AppHeader from './components/AppHeader.vue'
 import AppFooter from './components/AppFooter.vue'
 import SideMenu from './components/SideMenu.vue'
 
-const route = useRoute() // Lấy thông tin route hiện tại
+const route = useRoute() 
 
-// 1. Khai báo trạng thái menu
+
 const isMenuOpen = ref(false)
 
-// 2. Hàm thay đổi trạng thái
 function toggleMenu() {
   isMenuOpen.value = !isMenuOpen.value
 }

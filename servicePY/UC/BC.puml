@@ -1,0 +1,76 @@
+@startuml
+skinparam DefaultFontName Arial
+skinparam sequence {
+  ArrowColor Black
+  LifeLineBorderColor Black
+  LifeLineBackgroundColor White
+  ParticipantBorderColor Black
+  ParticipantBackgroundColor White
+}
+
+' Bật tự động đánh số thứ tự
+autonumber
+
+' Định nghĩa các thành phần
+actor "Quản lý (Admin)" as Admin
+boundary "Giao diện Báo cáo" as UI
+control "Hệ thống Xử lý" as System
+
+' Thay thế DB chung bằng các Entity cụ thể
+entity "Contract\n(Hợp đồng)" as ContractDB
+entity "CarStock\n(Kho xe)" as StockDB
+
+' --- LUỒNG MỞ DASHBOARD ---
+Admin -> UI : Nhấn chọn "Báo cáo thống kê"
+activate UI
+UI -> System : Yêu cầu dữ liệu tổng quan (Dashboard)
+activate System
+
+' Truy vấn Entity Hợp đồng
+System -> ContractDB : Đếm số lượng HĐ & Tổng doanh thu
+activate ContractDB
+ContractDB --> System : Trả về số liệu doanh số
+deactivate ContractDB
+
+' Truy vấn Entity Kho xe
+System -> StockDB : Đếm số xe tồn kho sẵn sàng
+activate StockDB
+StockDB --> System : Trả về số lượng xe
+deactivate StockDB
+
+System --> UI : Trả về dữ liệu tổng hợp Dashboard
+deactivate System
+UI --> Admin : Hiển thị màn hình Dashboard tổng quan
+
+' --- LUỒNG LỌC VÀ XEM BÁO CÁO CHI TIẾT ---
+Admin -> UI : Nhập tiêu chí lọc & Nhấn "Áp dụng"
+UI -> System : Gửi yêu cầu thống kê chi tiết
+activate System
+
+' Truy vấn chi tiết theo bộ lọc
+System -> ContractDB : Truy vấn DS HĐ theo Thời gian/Trạng thái
+activate ContractDB
+ContractDB --> System : Trả về danh sách Hợp đồng
+deactivate ContractDB
+
+System -> StockDB : Truy vấn DS Xe tồn (Aging/Loại xe)
+activate StockDB
+StockDB --> System : Trả về danh sách xe trong kho
+deactivate StockDB
+
+System -> System : Tổng hợp, tính toán & Format dữ liệu
+System --> UI : Trả về kết quả biểu đồ và bảng
+deactivate System
+UI --> Admin : Hiển thị biểu đồ & bảng dữ liệu chi tiết
+
+' --- LUỒNG XUẤT FILE ---
+Admin -> UI : Nhấn "Xuất file (Excel/CSV)"
+UI -> System : Yêu cầu tạo file báo cáo
+activate System
+System -> System : Biên dịch dữ liệu thành tệp tin (.xlsx/.csv)
+System --> UI : Trả về URL tải tệp tin
+deactivate System
+UI --> Admin : Tải file báo cáo xuống thiết bị
+deactivate UI
+
+@enduml

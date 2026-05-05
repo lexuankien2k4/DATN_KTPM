@@ -40,7 +40,6 @@ public class VnPayUtil {
         for (int i = 0; i < len; i++) sb.append(chars.charAt(rnd.nextInt(chars.length())));
         return sb.toString();
     }
-    // 👇 THÊM HÀM NÀY VÀO CUỐI CLASS 👇
     public static String hashAllFields(Map<String, String> fields, String secretKey) {
         List<String> fieldNames = new ArrayList<>(fields.keySet());
         Collections.sort(fieldNames);

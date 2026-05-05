@@ -1,6 +1,6 @@
 package com.Nhom7.DACN_KTPM.controller;
 
-import com.Nhom7.DACN_KTPM.dto.request.ApiResponse;
+import com.Nhom7.DACN_KTPM.dto.request.ApiRequest;
 import com.Nhom7.DACN_KTPM.dto.request.CalculationRequestDTO;
 
 import com.Nhom7.DACN_KTPM.dto.request.InstallmentPlanDTO;
@@ -27,22 +27,22 @@ public class FinanceController {
     FinanceService financeService;
 
     @GetMapping("/policies")
-    public ApiResponse<List<LoanPolicyResponse>> getActiveLoanPolicies(
+    public ApiRequest<List<LoanPolicyResponse>> getActiveLoanPolicies(
             @RequestParam(required = false) Integer bankId
     ) {
         log.info("Request received for active loan policies, bankId: {}", bankId);
-        return ApiResponse.<List<LoanPolicyResponse>>builder()
+        return ApiRequest.<List<LoanPolicyResponse>>builder()
                 .result(loanPolicyService.getActiveLoanPolicies(bankId))
                 .build();
     }
 
     @PostMapping("/calculate")
-    public ApiResponse<InstallmentPlanDTO> calculateLoan(
+    public ApiRequest<InstallmentPlanDTO> calculateLoan(
             @Valid @RequestBody CalculationRequestDTO request
     ) {
         log.info("Calculation request received: {}", request);
         InstallmentPlanDTO plan = financeService.calculateLoanInstallment(request);
-        return ApiResponse.<InstallmentPlanDTO>builder()
+        return ApiRequest.<InstallmentPlanDTO>builder()
                 .result(plan)
                 .build();
     }

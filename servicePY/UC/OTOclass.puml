@@ -1,0 +1,90 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam style strictuml
+skinparam packageStyle rectangle
+
+
+package "Car Management System" {
+
+    class CarCategory {
+        - Integer id
+        - String name
+        --
+        + getName(): String
+        + setName(name: String): void
+    }
+
+    class CarModel {
+        - Long id
+        - String name
+        - String bodyType
+        - Boolean isActive
+        --
+        + activateModel(): void
+        + deactivateModel(): void
+    }
+
+    class CarVariant {
+        - Long id
+        - String name
+        - BigDecimal price
+        - Long discountedPrice
+        - Integer seatCapacity
+        - Boolean isActive
+        ' Kích thước
+        - Integer length
+        - Integer width
+        - Integer height
+        - Integer wheelbase
+        - Integer groundClearance
+        ' Hiệu suất & Pin
+        - Integer maxPower
+        - Integer maxTorque
+        - BigDecimal battery
+        - Integer rangeNedc
+        - String driveModes
+        --
+        + calculateFinalPrice(): BigDecimal
+        + updateTechnicalSpecs(data): void
+        + getImagesByVariant(): List<CarImage>
+    }
+
+    class CarImage {
+        - Integer id
+        - String imageUrl
+        --
+        + getImageUrl(): String
+    }
+
+    class CarStock {
+        - Long id
+        - String vinNumber
+        - String engineNumber
+        - StockStatus status
+        - LocalDate importDate
+        --
+        + updateStatus(status: StockStatus): void
+        + getDaysInInventory(): long
+        + isAvailable(): boolean
+    }
+
+    class Color {
+        - Long id
+        - String colorCode
+        - String colorName
+        - String hexCode
+        - BigDecimal priceExtra
+        --
+        + getColorFullInfo(): String
+        + getPriceExtra(): BigDecimal
+    }
+}
+
+' Relationships
+CarCategory "1" *-- "0..*" CarModel : chứa >
+CarModel "1" *-- "0..*" CarVariant : có các biến thể >
+CarVariant "1" *-- "0..*" CarImage : có danh sách ảnh >
+CarVariant "1" <-- "0..*" CarStock : định nghĩa loại xe >
+Color "1" <-- "0..*" CarStock : áp dụng màu cho xe cụ thể >
+
+@enduml

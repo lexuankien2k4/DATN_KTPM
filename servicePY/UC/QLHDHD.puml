@@ -1,0 +1,30 @@
+@startuml
+title Biểu đồ hoạt động: Quản lý vòng đời Hợp đồng
+
+start
+:Khách hàng chốt dự toán;
+:Hệ thống khởi tạo Hợp đồng nháp (DRAFT);
+
+if (Khách hàng đổi ý?) then (Có)
+  :Xóa hợp đồng nháp;
+  stop
+else (Tiếp tục)
+  :Khách hàng thanh toán cọc qua VNPay;
+  if (Thanh toán thành công?) then (Có)
+    :Cập nhật trạng thái PAID;
+      :Hệ thống quét kho theo FIFO;
+      :Khóa mã VIN và gán vào Hợp đồng;
+    :Khách hàng ký điện tử (SIGNED);
+    :Quản trị viên duyệt tài chính (ACTIVE);
+    :Bàn giao xe thực tế;
+    :Cập nhật trạng thái cuối (DELIVERED);
+  else (Không/Hủy)
+    :Hủy hợp đồng (CANCELLED);
+    if (Đã có mã VIN?) then (Có)
+      :Tự động giải phóng mã VIN về kho;
+    endif
+  endif
+endif
+
+stop
+@enduml

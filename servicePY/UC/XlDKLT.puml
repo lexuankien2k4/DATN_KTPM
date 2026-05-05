@@ -1,0 +1,20 @@
+@startuml
+
+
+start
+:Quản lý truy cập "Quản lý đăng ký lái thử";
+:Hệ thống hiển thị danh sách khách hàng đăng ký;
+:Chọn một yêu cầu cụ thể;
+:Xem thông tin liên lạc và mẫu xe yêu cầu;
+:Gọi điện xác nhận thời gian & chuẩn bị giấy tờ;
+
+if (Khách hàng thực hiện lái thử?) then (Có)
+  :Ghi chú cảm nhận và đánh giá mức độ hài lòng;
+  :Nhấn "Cập nhật";
+  :Hệ thống chuyển trạng thái sang "Đã hoàn thành";
+else (Không/Hủy)
+  :Cập nhật trạng thái "Hủy/Dời lịch";
+endif
+
+stop
+@enduml

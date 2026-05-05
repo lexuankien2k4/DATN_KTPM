@@ -1,7 +1,7 @@
 package com.Nhom7.DACN_KTPM.controller;
 
 
-import com.Nhom7.DACN_KTPM.dto.request.ApiResponse;
+import com.Nhom7.DACN_KTPM.dto.request.ApiRequest;
 import com.Nhom7.DACN_KTPM.dto.request.PermissionRequest;
 import com.Nhom7.DACN_KTPM.dto.response.PermissionResponse;
 import com.Nhom7.DACN_KTPM.service.PermissionService;
@@ -22,22 +22,22 @@ public class PermissionController {
     PermissionService permissionService;
 
     @PostMapping
-    ApiResponse<PermissionResponse> create(@RequestBody PermissionRequest request) {
-        return ApiResponse.<PermissionResponse>builder()
+    ApiRequest<PermissionResponse> create(@RequestBody PermissionRequest request) {
+        return ApiRequest.<PermissionResponse>builder()
                 .result(permissionService.create(request))
                 .build();
     }
 
     @GetMapping
-    ApiResponse<List<PermissionResponse>> getAll() {
-        return ApiResponse.<List<PermissionResponse>>builder()
+    ApiRequest<List<PermissionResponse>> getAll() {
+        return ApiRequest.<List<PermissionResponse>>builder()
                 .result(permissionService.getAll())
                 .build();
     }
 
     @DeleteMapping("/{permission}")
-    ApiResponse<Void> delete(@PathVariable String permission) {
+    ApiRequest<Void> delete(@PathVariable String permission) {
         permissionService.delete(permission);
-        return ApiResponse.<Void>builder().build();
+        return ApiRequest.<Void>builder().build();
     }
 }

@@ -1,0 +1,31 @@
+@startuml
+title Biểu đồ hoạt động: Quy trình Quản lý Nhân viên
+
+start
+:Quản lý chọn "Quản lý Nhân viên";
+:Hệ thống truy xuất danh sách từ User Service;
+:Hiển thị bảng danh sách nhân viên;
+
+repeat
+  if (Thao tác của Quản lý?) then (Thêm mới)
+    :Nhập thông tin (Họ tên, Email, Vai trò);
+    :Mã hóa mật khẩu;
+    :Identity Service tạo tài khoản mới;
+  else if (Chỉnh sửa)
+    :Chọn nhân viên từ bảng;
+    :Cập nhật thông tin/vai trò mới;
+    :User Service lưu trạng thái cập nhật;
+  else (Xóa nhân viên)
+    :Nhấn "Xóa" tài khoản;
+    if (Xác nhận xóa?) then (Đồng ý)
+      :Identity Service vô hiệu hóa tài khoản;
+    else (Hủy)
+      :Giữ nguyên trạng thái;
+    endif
+  endif
+  :Cập nhật lại danh sách hiển thị;
+backward :Tiếp tục quản lý;
+repeat while (Quản lý xong?) is (Không) not (Có)
+
+stop
+@enduml

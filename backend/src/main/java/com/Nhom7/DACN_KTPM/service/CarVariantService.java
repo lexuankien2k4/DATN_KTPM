@@ -1,7 +1,9 @@
 package com.Nhom7.DACN_KTPM.service;
 
+import com.Nhom7.DACN_KTPM.constant.StockStatus;
 import com.Nhom7.DACN_KTPM.dto.request.CarVariantCreationRequest;
 import com.Nhom7.DACN_KTPM.dto.request.CarVariantUpdateRequest;
+import com.Nhom7.DACN_KTPM.dto.response.CarStockResponse;
 import com.Nhom7.DACN_KTPM.dto.response.CarVariantBasicResponse;
 import com.Nhom7.DACN_KTPM.dto.response.CarVariantDetailResponse;
 import com.Nhom7.DACN_KTPM.entity.CarImage;
@@ -12,6 +14,7 @@ import com.Nhom7.DACN_KTPM.exception.ErrorCode;
 import com.Nhom7.DACN_KTPM.mapper.CarVariantMapper;
 import com.Nhom7.DACN_KTPM.repository.CarImageRepository;
 import com.Nhom7.DACN_KTPM.repository.CarModelRepository;
+import com.Nhom7.DACN_KTPM.repository.CarStockRepository;
 import com.Nhom7.DACN_KTPM.repository.CarVariantRepository;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -19,6 +22,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,11 +33,13 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class CarVariantService {
+    private final CarStockRepository carStockRepository;
 
     CarVariantRepository carVariantRepository;
     CarModelRepository carModelRepository;
     CarVariantMapper carVariantMapper;
     CarImageRepository carImageRepository;
+
 
     @Transactional
     public CarVariantDetailResponse createVariant(CarVariantCreationRequest request) {
@@ -51,7 +58,7 @@ public class CarVariantService {
                 .orElseThrow(() -> new AppException(ErrorCode.CAR_MODEL_NOT_FOUND));
 
         CarVariant carVariant = carVariantMapper.toCarVariant(request);
-        carVariant.setCarModel(carModel); // Gán quan hệ
+        carVariant.setCarModel(carModel);
 
         try {
             // 1. Lưu xe trước để có ID
@@ -78,10 +85,10 @@ public class CarVariantService {
     }
 
 
-    public List<CarVariantBasicResponse> getActiveVariantsByModel(Long modelId) {
-        log.info("Fetching active variants for model ID: {}", modelId);
-        List<CarVariant> variants = carVariantRepository.findByCarModelIdAndIsActiveTrueOrderByNameAsc(modelId);
-        return carVariantMapper.toCarVariantBasicResponseList(variants);
+    public Page<CarVariantBasicResponse> getActiveVariantsByModel(Long modelId, Pageable pageable) {
+        log.info("Fetching active variants for model ID: {} with pagination", modelId);
+        return carVariantRepository.findByCarModelIdAndIsActiveTrueOrderByNameAsc(modelId, pageable)
+                .map(carVariantMapper::toCarVariantBasicResponse);
     }
 
 
@@ -118,18 +125,46 @@ public class CarVariantService {
 
     @Transactional
     public void deleteVariant(Long id) {
-        log.info("Deleting car variant with ID: {}", id);
-        if (!carVariantRepository.existsById(id)) {
-            throw new AppException(ErrorCode.CAR_VARIANT_NOT_FOUND);
+        log.info("Performing soft delete for car variant ID: {}", id);
+        CarVariant carVariant = carVariantRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.CAR_VARIANT_NOT_FOUND));
+
+        // Kiểm tra nếu đã có xe trong kho thì không được xóa vật lý
+        if (carStockRepository.existsByVariantId(id)) {
+            carVariant.setIsActive(false);
+            carVariantRepository.save(carVariant);
+            log.info("Variant ID {} has stock, performed soft delete (isActive=false)", id);
+        } else {
+            carVariantRepository.deleteById(id);
+            log.info("Deleted car variant ID: {}", id);
         }
-        carVariantRepository.deleteById(id);
-        log.info("Deleted car variant with ID: {}", id);
     }
 
     @Transactional
-    public List<CarVariantBasicResponse> getAllVariant() {
-        log.info("Fetching ALL car variants (including inactive)");
-        List<CarVariant> variants = carVariantRepository.findAll();
-        return carVariantMapper.toCarVariantBasicResponseList(variants);
+    public Page<CarVariantBasicResponse> getAllVariants(Pageable pageable) {
+        log.info("Fetching ALL car variants with pagination");
+        return carVariantRepository.findAll(pageable)
+                .map(carVariantMapper::toCarVariantBasicResponse);
+    }
+    /**
+     * HÀM MỚI: Lấy danh sách biến thể xe KÈM SỐ LƯỢNG TỒN KHO.
+     * Dành riêng cho giao diện Khách hàng.
+     */
+    @Transactional
+    public Page<CarVariantBasicResponse> getVariantsWithAvailableStock(Long modelId, Pageable pageable) {
+        log.info("Lấy danh sách xe kèm số lượng tồn kho. Model ID: {}", modelId);
+
+        Page<CarVariant> variants;
+        if (modelId != null) {
+            variants = carVariantRepository.findByCarModelIdAndIsActiveTrueOrderByNameAsc(modelId, pageable);
+        } else {
+            variants = carVariantRepository.findAll(pageable);
+        }
+
+        return variants.map(variant -> {
+            CarVariantBasicResponse response = carVariantMapper.toCarVariantBasicResponse(variant);
+            long stockCount = carStockRepository.countByVariantIdAndStatus(variant.getId(), StockStatus.IN_STOCK);            response.setAvailableStock(stockCount);
+            return response;
+        });
     }
 }

@@ -1,0 +1,132 @@
+@startuml
+skinparam Style strictuml
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+' === MODULE XE & KHO ===
+package "Vehicle & Stock Module" {
+    class CarCategory {
+        - id : Integer
+        - name : String
+    }
+
+    class CarModel {
+        - id : Long
+        - name : String
+        - bodyType : String
+        - isActive : Boolean
+    }
+
+    class CarVariant {
+        - id : Long
+        - name : String
+        - price : BigDecimal
+        - battery : BigDecimal
+        - maxPower : Integer
+        - rangeNedc : Integer
+        - seatCapacity : Integer
+    }
+
+    class CarImage {
+        - id : Integer
+        - imageUrl : String
+    }
+
+    class Color {
+        - id : Long
+        - colorCode : String
+        - colorName : String
+        - priceExtra : BigDecimal
+    }
+
+    class CarStock {
+        - id : Long
+        - vinNumber : String
+        - status : StockStatus
+        - manufacturingYear : Integer
+    }
+}
+
+' === MODULE TÀI CHÍNH ===
+package "Finance Module" {
+    class Bank {
+        - id : Integer
+        - name : String
+    }
+
+    class LoanPolicy {
+        - id : Integer
+        - name : String
+        - minDownPaymentRate : BigDecimal
+        - preferentialRatePercent : BigDecimal
+        - maxLoanTermYears : Integer
+    }
+}
+
+' === MODULE NGHIỆP VỤ BÁN HÀNG ===
+package "Sales Module" {
+    class User {
+        - id : String
+        - username : String
+    }
+
+    class Deposit {
+        - id : Long
+        - customerName : String
+        - phone : String
+        - cccd : String
+        - amount : BigDecimal
+        - status : String
+    }
+
+    class Contract {
+        - id : Long
+        - contractNumber : String
+        - finalPrice : BigDecimal
+        - status : ContractStatus
+        - isSigned : boolean
+        - vinNumber : String
+        - loanTermMonths : Integer
+        - monthlyInstallment : BigDecimal
+    }
+
+    enum ContractStatus <<enumeration>> {
+        DRAFT
+        SIGNED
+        PAID
+        RESERVED
+        COMPLETED
+    }
+}
+
+' === QUAN HỆ (RELATIONSHIPS) ===
+
+' Quan hệ từ Category đến Model
+CarCategory "1" *-- "0..*" CarModel : contains >
+
+' Quan hệ từ Model đến Variant
+CarModel "1" *-- "0..*" CarVariant : provides >
+
+' Variant có nhiều ảnh
+CarVariant "1" *-- "0..*" CarImage : has >
+
+' Stock liên kết với Variant và Color
+CarStock "0..*" -- "1" CarVariant
+CarStock "0..*" -- "1" Color
+
+' Tài chính
+Bank "1" *-- "0..*" LoanPolicy : offers >
+
+' Nghiệp vụ Đặt cọc
+User "1" -- "0..*" Deposit : makes >
+Deposit "0..*" -- "1" CarVariant : selects >
+
+' Nghiệp vụ Hợp đồng
+Contract "1" -- "1" Deposit : based on >
+Contract ..> ContractStatus : uses >
+
+' Liên kết logic qua số VIN
+Contract "0..1" -- "1" CarStock : assigns VIN >
+
+@enduml

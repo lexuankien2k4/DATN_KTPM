@@ -1,0 +1,48 @@
+@startuml
+!theme plain
+skinparam ActivityBackgroundColor #FFFFFF
+skinparam ActivityBorderColor #333333
+skinparam ArrowColor #333333
+skinparam DefaultFontName Arial
+skinparam ActivityBorderThickness 1
+
+
+
+start
+
+:Quản lý chọn chức năng "Báo cáo thống kê";
+
+:Hệ thống hiển thị màn hình Dashboard tổng quan\n(Tổng doanh thu, số HĐ, xe tồn kho);
+
+:Quản lý chọn loại báo cáo chi tiết\n(Doanh thu, Tồn kho, Hợp đồng);
+
+repeat
+  :Quản lý thiết lập tiêu chí lọc\n(Thời gian, Trạng thái, Loại xe...);
+  
+  :Nhấn nút "Áp dụng";
+
+  :Hệ thống truy xuất dữ liệu từ CSDL;
+
+  if (Có dữ liệu phù hợp?) then (Không)
+    :Hệ thống hiển thị thông báo\n"Không tìm thấy dữ liệu";
+    ' Vòng lặp quay lại bước thiết lập bộ lọc
+  else (Có)
+    :Hệ thống tổng hợp số liệu và render giao diện;
+    :Hiển thị biểu đồ trực quan và bảng số liệu chi tiết;
+    break
+  endif
+repeat while
+
+if (Quản lý muốn tải báo cáo?) then (Có)
+  :Nhấn nút "Xuất file (Excel/CSV)";
+  
+  :Hệ thống biên dịch dữ liệu thành tệp tin;
+  
+  :Tự động tải tệp tin xuống thiết bị của Quản lý;
+else (Không)
+endif
+
+:Kết thúc xem báo cáo;
+
+stop
+@enduml

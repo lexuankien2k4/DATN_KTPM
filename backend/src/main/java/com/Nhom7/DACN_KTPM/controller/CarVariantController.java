@@ -1,6 +1,6 @@
 package com.Nhom7.DACN_KTPM.controller;
 
-import com.Nhom7.DACN_KTPM.dto.request.ApiResponse;
+import com.Nhom7.DACN_KTPM.dto.request.ApiRequest;
 import com.Nhom7.DACN_KTPM.dto.request.CarVariantCreationRequest;
 import com.Nhom7.DACN_KTPM.dto.request.CarVariantUpdateRequest;
 import com.Nhom7.DACN_KTPM.dto.response.CarVariantBasicResponse;
@@ -11,9 +11,11 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/variants")
@@ -24,56 +26,73 @@ public class CarVariantController {
 
     CarVariantService carVariantService;
 
+    /**
+     * Lấy danh sách biến thể xe hỗ trợ phân trang và lọc theo Model.
+     * Sử dụng @PageableDefault để mặc định kích thước trang là 10.
+     */
     @GetMapping
-
-    ApiResponse<List<CarVariantBasicResponse>> getAllVariants(
-            @RequestParam(required = false) Long modelId
+    ApiRequest<Page<CarVariantBasicResponse>> getAllVariants(
+            @RequestParam(required = false) Long modelId,
+            // THÊM SORT VÀ DIRECTION VÀO ĐÂY
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         if (modelId != null) {
-            log.info("Request to get active car variants for model ID: {}", modelId);
-            return ApiResponse.<List<CarVariantBasicResponse>>builder()
-                    .result(carVariantService.getActiveVariantsByModel(modelId))
+            log.info("Yêu cầu lấy danh sách biến thể hoạt động cho Model ID: {}", modelId);
+            return ApiRequest.<Page<CarVariantBasicResponse>>builder()
+                    .result(carVariantService.getActiveVariantsByModel(modelId, pageable))
                     .build();
         }
-        log.info("Request to get ALL car variants (No filter)");
-        return ApiResponse.<List<CarVariantBasicResponse>>builder()
-                .result(carVariantService.getAllVariant())
+        log.info("Yêu cầu lấy TẤT CẢ biến thể (không lọc, có phân trang)");
+        return ApiRequest.<Page<CarVariantBasicResponse>>builder()
+                .result(carVariantService.getAllVariants(pageable))
                 .build();
     }
 
     @PostMapping
-    ApiResponse<CarVariantDetailResponse> createVariant(@RequestBody @Valid CarVariantCreationRequest request) {
-        log.info("Request to create car variant: {} for model ID: {}", request.getName(), request.getModelId());
-        return ApiResponse.<CarVariantDetailResponse>builder()
+    ApiRequest<CarVariantDetailResponse> createVariant(@RequestBody @Valid CarVariantCreationRequest request) {
+        log.info("Khởi tạo biến thể xe mới: {} cho Model ID: {}", request.getName(), request.getModelId());
+        return ApiRequest.<CarVariantDetailResponse>builder()
                 .result(carVariantService.createVariant(request))
-                .message("Car variant created successfully")
+                .message("Khởi tạo biến thể xe thành công")
                 .build();
     }
 
     @GetMapping("/{id}/details")
-
-    ApiResponse<CarVariantDetailResponse> getVariantDetail(@PathVariable Long id) {
-        log.info("Request to get car variant details for ID: {}", id);
-        return ApiResponse.<CarVariantDetailResponse>builder()
+    ApiRequest<CarVariantDetailResponse> getVariantDetail(@PathVariable Long id) {
+        log.info("Lấy chi tiết biến thể xe ID: {}", id);
+        return ApiRequest.<CarVariantDetailResponse>builder()
                 .result(carVariantService.getVariantDetail(id))
                 .build();
     }
 
     @PutMapping("/{id}")
-    ApiResponse<CarVariantDetailResponse> updateVariant(@PathVariable Long id, @RequestBody @Valid CarVariantUpdateRequest request) {
-        log.info("Request to update car variant ID: {}", id);
-        return ApiResponse.<CarVariantDetailResponse>builder()
+    ApiRequest<CarVariantDetailResponse> updateVariant(
+            @PathVariable Long id,
+            @RequestBody @Valid CarVariantUpdateRequest request) {
+        log.info("Cập nhật biến thể xe ID: {}", id);
+        return ApiRequest.<CarVariantDetailResponse>builder()
                 .result(carVariantService.updateVariant(id, request))
-                .message("Car variant updated successfully")
+                .message("Cập nhật biến thể xe thành công")
                 .build();
     }
 
     @DeleteMapping("/{id}")
-    ApiResponse<String> deleteVariant(@PathVariable Long id) {
-        log.info("Request to delete car variant ID: {}", id);
+    ApiRequest<String> deleteVariant(@PathVariable Long id) {
+        log.info("Yêu cầu xóa/vô hiệu hóa biến thể xe ID: {}", id);
         carVariantService.deleteVariant(id);
-        return ApiResponse.<String>builder()
-                .result("Phiên bản xe đã được xóa thành công")
+        return ApiRequest.<String>builder()
+                .result("Xử lý xóa/vô hiệu hóa biến thể xe thành công")
+                .build();
+    }
+    @GetMapping("/available")
+    ApiRequest<Page<CarVariantBasicResponse>> getAvailableVariants(
+            @RequestParam(required = false) Long modelId,
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        log.info("Yêu cầu lấy danh sách biến thể CÓ SẴN TRONG KHO");
+        return ApiRequest.<Page<CarVariantBasicResponse>>builder()
+                .result(carVariantService.getVariantsWithAvailableStock(modelId, pageable))
+                .message("Lấy danh sách xe tồn kho thành công")
                 .build();
     }
 }

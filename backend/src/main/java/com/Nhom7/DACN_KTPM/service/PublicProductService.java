@@ -19,7 +19,7 @@ public class PublicProductService {
     public List<ProductDisplayResponse> getProductsByCategory(String categoryType) {
         Integer categoryId;
 
-        // Xác định ID danh mục (Vẫn giữ Integer vì bảng Category dùng int)
+        // Xác định ID danh mục dựa trên loại xe
         switch (categoryType.toLowerCase()) {
             case "ev": categoryId = 1; break;
             case "gasoline": categoryId = 2; break;
@@ -27,31 +27,38 @@ public class PublicProductService {
             default: categoryId = 1;
         }
 
-        // Tìm model theo categoryId (Hàm này nhận Integer - ĐÚNG)
         List<CarModel> models = carModelRepository.findByCategoryId(categoryId);
-
         List<ProductDisplayResponse> responses = new ArrayList<>();
 
         for (CarModel model : models) {
-            // Lấy biến thể đầu tiên làm đại diện
+            // Lấy biến thể đầu tiên làm đại diện hiển thị trên trang chủ
             CarVariant representativeVariant = model.getVariants().stream().findFirst().orElse(null);
 
             if (representativeVariant != null) {
-                // Lấy ảnh đầu tiên
-                String imageUrl = representativeVariant.getImages().stream()
+                // Xử lý URL ảnh để đảm bảo hiển thị đúng
+                String rawPath = representativeVariant.getImages().stream()
                         .findFirst()
-                        .map(img -> "http://localhost:8080/" + img.getImageUrl())
-                        .orElse("/assets/image/default.png");
+                        .map(img -> img.getImageUrl())
+                        .orElse("default.png");
+
+                String finalPath = rawPath.startsWith("images/") || rawPath.startsWith("/images/")
+                        ? rawPath
+                        : "/images/" + rawPath;
+
+                String imageUrl = "http://localhost:8080" + (finalPath.startsWith("/") ? "" : "/") + finalPath;
 
                 responses.add(ProductDisplayResponse.builder()
-                        .id(model.getId()) // model.getId() là Long -> Khớp
+                        .id(representativeVariant.getId())
                         .name(model.getName())
                         .price(representativeVariant.getPrice())
                         .image(imageUrl)
                         .range((representativeVariant.getRangeNedc() != null ? representativeVariant.getRangeNedc() : 0) + " km")
                         .type(model.getBodyType())
                         .categoryName(model.getCategory().getName())
-                        .seats("5")
+
+                        .seats(representativeVariant.getSeatCapacity() != null
+                                ? String.valueOf(representativeVariant.getSeatCapacity())
+                                : "N/A")
                         .build());
             }
         }

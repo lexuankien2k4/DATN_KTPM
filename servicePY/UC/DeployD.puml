@@ -1,0 +1,41 @@
+@startuml
+skinparam DefaultFontName Arial
+skinparam BackgroundColor white
+
+' Tùy chỉnh màu sắc nhẹ nhàng giống ảnh
+skinparam node {
+  BackgroundColor #FFFFE0
+  BorderColor Black
+}
+skinparam artifact {
+  BackgroundColor #98FB98
+  BorderColor Black
+}
+skinparam database {
+  BackgroundColor #FFA500
+  BorderColor Black
+}
+
+
+node "Client's Device" <<device>> as Client {
+    artifact "Web Browser" <<artifact>> as Browser
+}
+
+node "Application Server" <<device>> as AppServer {
+    artifact "Backend.jar" <<artifact>> as Backend
+    artifact "Vue-App" <<artifact>> as VueApp
+}
+
+node "Database Server" <<device>> as DBServer {
+    database "MySQL Server" <<artifact>> as MySQL
+}
+
+node "VNPay System" <<device>> as VNPayServer {
+    artifact "Payment Gateway" <<artifact>> as VNPay
+}
+
+' Kết nối các thiết bị
+Client -- AppServer : HTTP/S
+AppServer -- DBServer : JDBC
+AppServer -- VNPayServer : HTTP/S
+@enduml

@@ -1,0 +1,79 @@
+@startuml
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+
+' --- KHAI BÁO TẤT CẢ LÊN ĐẦU ĐỂ CÁC CỘT BẰNG NHAU ---
+actor "Khách hàng" as User
+boundary "Giao diện Mua Xe" as UI
+control "Hệ thống Xử lý" as Controller
+entity "Hợp đồng" as Contract
+entity "Kho Xe" as Inventory
+participant "Cổng Thanh Toán" as PaymentGateway
+
+title Biểu đồ trình tự: Use Case Mua xe trả góp (Đã căn chỉnh cột)
+
+autonumber
+
+User -> UI: Nhấn "Mua trả góp"
+activate UI
+    UI --> User: Hiển thị form tùy chọn
+deactivate UI
+
+User -> UI: Nhập thông số (Trả trước, kỳ hạn...)
+activate UI
+    UI -> Controller: Yêu cầu tính toán lịch trả góp
+    activate Controller
+        Controller -> Controller: Tính toán lãi suất
+        Controller --> UI: Trả về bảng tính
+    deactivate Controller
+    UI --> User: Hiển thị bảng kê tài chính
+deactivate UI
+
+User -> UI: Cung cấp CCCD & chọn Showroom
+activate UI
+    UI -> Controller: Yêu cầu tạo hợp đồng
+    activate Controller
+        ' Thay vì dùng 'create', ta dùng 'activate' vì Contract đã có sẵn ở trên đầu
+        Controller -> Contract: Khởi tạo dữ liệu hợp đồng
+        activate Contract
+        Contract --> Controller: Xác nhận khởi tạo
+        deactivate Contract
+        Controller --> UI: Trả về bản thảo hợp đồng
+    deactivate Controller
+    UI --> User: Hiển thị nội dung hợp đồng
+deactivate UI
+
+User -> UI: Thực hiện ký tên điện tử
+activate UI
+    UI -> Controller: Xác nhận chữ ký
+    activate Controller
+        Controller -> Contract: Cập nhật trạng thái "Đã ký"
+        activate Contract
+        Contract --> Controller: Lưu thành công
+        deactivate Contract
+        Controller --> UI: Hợp đồng hợp lệ
+    deactivate Controller
+deactivate UI
+
+User -> UI: Chọn thanh toán đặt cọc (50 triệu)
+activate UI
+    UI -> PaymentGateway: Điều hướng thanh toán
+    activate PaymentGateway
+        PaymentGateway --> User: Yêu cầu xác thực
+        User -> PaymentGateway: Xác nhận chuyển tiền
+        PaymentGateway --> Controller: Phản hồi "Thành công"
+    deactivate PaymentGateway
+    
+    activate Controller
+        Controller -> Inventory: Yêu cầu giữ xe (Reserve)
+        activate Inventory
+            Inventory -> Inventory: Gán số khung (VIN)
+            Inventory --> Controller: Xác nhận thành công
+        deactivate Inventory
+        Controller --> UI: Thông báo hoàn tất
+    deactivate Controller
+
+    UI --> User: Thông báo & Số VIN xe đã giữ
+deactivate UI
+
+@enduml

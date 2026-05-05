@@ -1,0 +1,77 @@
+@startuml
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+
+actor "Quản lý" as Admin
+boundary "GDQuanLyNhanVien : Boundary" as UI
+control "UserController : Control" as UserService
+control "IdentityController : Control" as IdentityService
+entity "User : Entity" as UserEntity
+
+title Biểu đồ trình tự: Use Case Quản lý Nhân viên
+
+
+
+Admin -> UI: 1. Truy cập mục "Quản lý Nhân viên"
+activate UI
+    UI -> UserService: 2. GET /api/users
+    activate UserService
+        UserService -> UserEntity: 3. findAll()
+        activate UserEntity
+        UserEntity --> UserService: 4. trả về danh sách dữ liệu
+        deactivate UserEntity
+        UserService --> UI: 5. phản hồi JSON (Họ tên, Email, Vai trò)
+    deactivate UserService
+    UI --> Admin: 6. hiển thị danh sách nhân viên lên bảng
+deactivate UI
+
+Admin -> UI: 7. Chọn "Thêm mới", nhập thông tin & nhấn "Lưu"
+activate UI
+    UI -> IdentityService: 8. POST /api/auth/register
+    activate IdentityService
+        IdentityService -> IdentityService: 9. xác thực & mã hóa mật khẩu
+        IdentityService -> UserEntity: 10. save(new User)
+        activate UserEntity
+        UserEntity --> IdentityService: 11. xác nhận khởi tạo tài nguyên
+        deactivate UserEntity
+        IdentityService --> UI: 12. thông báo tạo thành công
+    deactivate IdentityService
+    UI --> Admin: 13. cập nhật bảng danh sách
+deactivate UI
+
+Admin -> UI: 14. Chọn "Chỉnh sửa" một tài khoản
+activate UI
+    UI -> UserService: 15. gọi API lấy dữ liệu chi tiết
+    activate UserService
+    UserService --> UI: 16. trả về dữ liệu User
+    deactivate UserService
+    
+    Admin -> UI: 17. cập nhật thông tin & xác nhận
+    UI -> UserService: 18. PUT /api/users/{id}
+    activate UserService
+        UserService -> UserEntity: 19. updateStatus(newData)
+        activate UserEntity
+        UserEntity --> UserService: 20. xác nhận cập nhật thành công
+        deactivate UserEntity
+        UserService --> UI: 21. phản hồi trạng thái mới
+    deactivate UserService
+    UI --> Admin: 22. hiển thị thông báo thành công
+deactivate UI
+
+Admin -> UI: 23. Nhấn "Xóa"
+UI --> Admin: 24. hiển thị hộp thoại xác nhận
+
+Admin -> UI: 25. xác nhận đồng ý
+activate UI
+    UI -> IdentityService: 26. DELETE /api/auth/{id}
+    activate IdentityService
+        IdentityService -> UserEntity: 27. set isActive = false
+        activate UserEntity
+        UserEntity --> IdentityService: 28. xác nhận vô hiệu hóa
+        deactivate UserEntity
+        IdentityService --> UI: 29. phản hồi lệnh DELETE thành công
+    deactivate IdentityService
+    UI --> Admin: 30. ẩn tài khoản khỏi danh sách hiển thị
+deactivate UI
+
+@enduml
