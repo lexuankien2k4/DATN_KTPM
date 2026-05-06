@@ -1,0 +1,134 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam Style strictuml
+skinparam shadowing false
+skinparam linetype polyline
+
+class CarCategory {
+  - id : Integer
+  - name : String
+  - carModels : Set<CarModel>
+  
+  + getId() : Integer
+  + setId(id: Integer) : void
+  + getName() : String
+  + setName(name: String) : void
+  + getCarModels() : Set<CarModel>
+  + setCarModels(carModels: Set<CarModel>) : void
+}
+
+class CarModel {
+  - id : Long
+  - name : String
+  - bodyType : String
+  - isActive : Boolean
+  - category : CarCategory
+  - variants : List<CarVariant>
+  
+  + getId() : Long
+  + setId(id: Long) : void
+  + getName() : String
+  + setName(name: String) : void
+  + getBodyType() : String
+  + setBodyType(bodyType: String) : void
+  + getIsActive() : Boolean
+  + setIsActive(isActive: Boolean) : void
+  + getCategory() : CarCategory
+  + setCategory(category: CarCategory) : void
+  + getVariants() : List<CarVariant>
+  + setVariants(variants: List<CarVariant>) : void
+}
+
+class CarVariant {
+  - id : Long
+  - name : String
+  - price : BigDecimal
+  - discountedPrice : Long
+  - battery : BigDecimal
+  - rangeNedc : Integer
+  - carModel : CarModel
+  - images : List<CarImage>
+  
+  + getId() : Long
+  + setId(id: Long) : void
+  + getName() : String
+  + setName(name: String) : void
+  + getPrice() : BigDecimal
+  + setPrice(price: BigDecimal) : void
+  + getBattery() : BigDecimal
+  + setBattery(battery: BigDecimal) : void
+  + getCarModel() : CarModel
+  + setCarModel(carModel: CarModel) : void
+  + getImages() : List<CarImage>
+  + setImages(images: List<CarImage>) : void
+  ' Các thuộc tính kích thước, động cơ được ẩn bớt để biểu đồ dễ nhìn
+}
+
+class CarImage {
+  - id : Integer
+  - imageUrl : String
+  - carVariant : CarVariant
+  
+  + getId() : Integer
+  + setId(id: Integer) : void
+  + getImageUrl() : String
+  + setImageUrl(imageUrl: String) : void
+  + getCarVariant() : CarVariant
+  + setCarVariant(carVariant: CarVariant) : void
+}
+
+class Color {
+  - id : Long
+  - colorCode : String
+  - colorName : String
+  - hexCode : String
+  - priceExtra : BigDecimal
+  
+  + getId() : Long
+  + setId(id: Long) : void
+  + getColorCode() : String
+  + setColorCode(colorCode: String) : void
+  + getColorName() : String
+  + setColorName(colorName: String) : void
+  + getHexCode() : String
+  + setHexCode(hexCode: String) : void
+  + getPriceExtra() : BigDecimal
+  + setPriceExtra(priceExtra: BigDecimal) : void
+}
+
+class CarStock {
+  - id : Long
+  - vinNumber : String
+  - engineNumber : String
+  - status : StockStatus
+  - importDate : LocalDate
+  - manufacturingYear : Integer
+  - storageLocation : String
+  - variant : CarVariant
+  - color : Color
+  
+  + getId() : Long
+  + setId(id: Long) : void
+  + getVinNumber() : String
+  + setVinNumber(vinNumber: String) : void
+  + getEngineNumber() : String
+  + setEngineNumber(engineNumber: String) : void
+  + getStatus() : StockStatus
+  + setStatus(status: StockStatus) : void
+  + getVariant() : CarVariant
+  + setVariant(variant: CarVariant) : void
+  + getColor() : Color
+  + setColor(color: Color) : void
+}
+
+' =========================================
+' MỐI QUAN HỆ GIỮA CÁC THỰC THỂ
+' =========================================
+
+CarCategory "1" *-- "0..*" CarModel : contains >
+CarModel "1" *-- "0..*" CarVariant : contains >
+CarVariant "1" *-- "0..*" CarImage : has >
+CarVariant "1" <-- "0..*" CarStock : specifies <
+Color "1" <-- "0..*" CarStock : painted with <
+
+@enduml

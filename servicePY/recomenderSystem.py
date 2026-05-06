@@ -314,7 +314,7 @@ class VinFastRecommender:
         except Exception as e:
             logger.error(f"Lỗi nạp dữ liệu: {e}")
 
-    def recommend(self, user_text: str, top_k: int = 10) -> list | None:
+    def recommend(self, user_text: str, top_k: int = 4) -> list | None:
         if not self.is_ready:
             return None
 

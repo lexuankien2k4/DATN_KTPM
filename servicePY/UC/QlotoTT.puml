@@ -10,7 +10,6 @@ control "CarStockControl : Control" as StockRepo
 entity "CarVariant : Entity" as Variant
 entity "CarStock : Entity" as Stock
 
-title Biểu đồ trình tự: Use Case Quản lý Ô tô
 
 
 

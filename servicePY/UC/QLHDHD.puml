@@ -1,5 +1,4 @@
 @startuml
-title Biểu đồ hoạt động: Quản lý vòng đời Hợp đồng
 
 start
 :Khách hàng chốt dự toán;

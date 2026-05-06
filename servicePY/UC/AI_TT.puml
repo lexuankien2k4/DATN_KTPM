@@ -7,7 +7,7 @@ actor "Khách hàng" as KH
 boundary "Giao diện Chat" as UI
 control "TuVanControl" as Ctrl
 control "AIServiceController" as AI
-entity "CarModel" as ENT
+entity "CarVariant" as ENT
 
 ' Bước 1: Mở chức năng
 KH -> UI: 1: Mở chức năng "Tư vấn cùng AI"

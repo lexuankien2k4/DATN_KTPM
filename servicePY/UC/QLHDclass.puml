@@ -1,45 +1,115 @@
 @startuml
 skinparam classAttributeIconSize 0
-skinparam style strictuml
+skinparam Style strictuml
+skinparam shadowing false
+skinparam linetype polyline
 
 
+class Contract {
+  - id : Long
+  - contractNumber : String
+  - deposit : Deposit
+  - finalPrice : BigDecimal
+  - status : ContractStatus
+  - createdBy : String
+  - batteryServiceType : String
+  - batteryCost : BigDecimal
+  - prepaymentAmount : BigDecimal
+  - loanTermMonths : Integer
+  - monthlyInstallment : BigDecimal
+  - interestRate : BigDecimal
+  - isSigned : Boolean
+  - vnpTransactionNo : String
+  - signingAppointmentDate : LocalDateTime
+  - expectedDeliveryDate : LocalDateTime
+  - vinNumber : String
+  - createdAt : LocalDateTime
+  - updatedAt : LocalDateTime
 
-    class Contract {
-        - Long id
-        - String contractNumber
-        - String vinNumber
-        - BigDecimal depositAmount
-        - String digitalSignature
-        - ContractStatus status
-        --
-        + updateStatus(newStatus: ContractStatus): void
-        + assignVIN(vin: String): void
-        + saveSignature(sign: String): void
-    }
+  + getId() : Long
+  + setId(id: Long) : void
+  + getContractNumber() : String
+  + setContractNumber(contractNumber: String) : void
+  + getDeposit() : Deposit
+  + setDeposit(deposit: Deposit) : void
+  + getStatus() : ContractStatus
+  + setStatus(status: ContractStatus) : void
+  + getVinNumber() : String
+  + setVinNumber(vinNumber: String) : void
+  + getIsSigned() : Boolean
+  + setIsSigned(isSigned: Boolean) : void
+  ' Các Get/Set khác được ẩn bớt để tối ưu hiển thị
+}
 
-    enum ContractStatus {
-        DRAFT
-        PAID
-        SIGNED
-        BANK_APPROVING
-        ACTIVE
-        DELIVERED
-        CANCELLED
-    }
+class Deposit {
+  - id : Long
+  - variant : CarVariant
+  - selectedColor : String
+  - amount : BigDecimal
+  - status : String
+  - paymentMethod : String
+  - staffId : String
+  - note : String
+  - customerName : String
+  - phone : String
+  - email : String
+  - cccd : String
+  - createdAt : LocalDateTime
+  - updatedAt : LocalDateTime
 
+  + getId() : Long
+  + setId(id: Long) : void
+  + getVariant() : CarVariant
+  + setVariant(variant: CarVariant) : void
+  + getAmount() : BigDecimal
+  + setAmount(amount: BigDecimal) : void
+  + getStatus() : String
+  + setStatus(status: String) : void
+  + getCustomerName() : String
+  + setCustomerName(customerName: String) : void
+  ' Các Get/Set khác được ẩn bớt để tối ưu hiển thị
+}
 
+class CarStock {
+  - id : Long
+  - vinNumber : String
+  - engineNumber : String
+  - variant : CarVariant
+  - status : StockStatus
+  - storageLocation : String
 
-    class CarStock {
-        - String vinNumber
-        - StockStatus status
-    }
+  + getId() : Long
+  + setId(id: Long) : void
+  + getVinNumber() : String
+  + setVinNumber(vinNumber: String) : void
+  + getStatus() : StockStatus
+  + setStatus(status: StockStatus) : void
+}
 
+class CarVariant {
+  - id : Long
+  - name : String
+  - price : BigDecimal
+  
+  + getId() : Long
+  + getName() : String
+  + getPrice() : BigDecimal
+}
 
+' =========================================
+' MỐI QUAN HỆ GIỮA CÁC THỰC THỂ
+' =========================================
 
+' Một Hợp đồng được tạo dựa trên một Đơn đặt cọc (OneToOne)
+Contract "1" --> "0..1" Deposit : based on >
 
-' Relationships
-Contract "1" -- "0..1" CarStock : "gán mã VIN <"
-Contract ..> ContractStatus : "trạng thái"
+' Một Đơn đặt cọc xác định một Phiên bản xe cụ thể (ManyToOne)
+Deposit "0..*" --> "1" CarVariant : targets >
 
+' Xe trong kho thuộc về một Phiên bản xe (ManyToOne)
+CarStock "0..*" --> "1" CarVariant : is type of >
+
+' Hợp đồng tham chiếu trực tiếp đến xe vật lý thông qua vinNumber
+Contract "0..1" ..> "1" CarStock : locks car by vinNumber >
 
 @enduml

@@ -1,5 +1,5 @@
 @startuml
-title Quy trình nghiệp vụ Mua xe trả góp
+
 
 start
 :Nhấn "Mua trả góp" từ AI gợi ý;

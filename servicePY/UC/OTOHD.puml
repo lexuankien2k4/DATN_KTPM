@@ -1,5 +1,4 @@
 @startuml
-title Biểu đồ hoạt động: Quy trình Quản lý Ô tô
 
 start
 :Quản lý truy cập mục "Quản lý Ô tô";

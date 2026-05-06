@@ -10,7 +10,6 @@ entity "Hợp đồng" as Contract
 entity "Kho Xe" as Inventory
 participant "Cổng Thanh Toán" as PaymentGateway
 
-title Biểu đồ trình tự: Use Case Mua xe trả góp (Đã căn chỉnh cột)
 
 autonumber
 

@@ -6,7 +6,6 @@ skinparam ArrowColor #333333
 skinparam DefaultFontName Arial
 skinparam ActivityBorderThickness 1
 
-title Biểu đồ Luồng Nghiệp vụ\nHệ thống  Mua Xe Trực tuyến tích hợp AI
 
 start
 

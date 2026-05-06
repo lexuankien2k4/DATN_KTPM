@@ -4,7 +4,7 @@ skinparam style strictuml
 skinparam packageStyle rectangle
 
 
-package "Car Management System" {
+
 
     class CarCategory {
         - Integer id
@@ -78,7 +78,7 @@ package "Car Management System" {
         + getColorFullInfo(): String
         + getPriceExtra(): BigDecimal
     }
-}
+
 
 ' Relationships
 CarCategory "1" *-- "0..*" CarModel : chứa >

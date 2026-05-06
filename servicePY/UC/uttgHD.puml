@@ -1,0 +1,31 @@
+@startuml
+!theme plain
+
+|Khách hàng|
+|Hệ thống|
+
+|Hệ thống|
+start
+
+|Khách hàng|
+:Chọn một mẫu xe/phiên bản;
+
+|Hệ thống|
+:Hiển thị giá và thông tin chi tiết của xe;
+
+|Khách hàng|
+while (Muốn thay đổi thông số?) is (Có)
+  :Điều chỉnh các thông số\n(trả trước, kỳ hạn, lãi suất);
+  
+  |Hệ thống|
+  :Tính toán lại gói trả góp;
+  :Hiển thị kết quả và lịch trả nợ mới;
+  
+  |Khách hàng|
+endwhile (Không, đã ưng ý)
+
+|Khách hàng|
+:Xem kết quả cuối cùng;
+
+stop
+@enduml

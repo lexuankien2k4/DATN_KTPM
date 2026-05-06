@@ -2,16 +2,14 @@
 skinparam style strictuml
 skinparam sequenceMessageAlign center
 
-actor "Khách hàng" as Customer
+
 actor "Quản trị viên" as Admin
 boundary "HeThong : Boundary" as UI
 control "ConsulationController : Control" as Controller
 entity "Contract : Entity" as Contract
 entity "CarStock : Entity" as Stock
 
-title Biểu đồ trình tự: UC Quản lý Hợp đồng
 
-autonumber 1 1 "<b>0"
 
 Customer -> UI: 1. Thực hiện thanh toán cọc (VNPay)
 activate UI

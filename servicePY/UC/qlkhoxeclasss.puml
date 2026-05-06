@@ -1,0 +1,99 @@
+@startuml
+!theme plain
+title Biểu đồ Lớp: Thực thể và API Controller
+
+package "Entities" {
+  class CarCategory {
+    - id : Integer
+    - name : String
+    - carModels : Set<CarModel>
+  }
+
+  class CarModel {
+    - id : Long
+    - name : String
+    - bodyType : String
+    - isActive : Boolean
+    - category : CarCategory
+    - variants : List<CarVariant>
+  }
+
+  class CarImage {
+    - id : Integer
+    - imageUrl : String
+    - carVariant : CarVariant
+  }
+  
+  class CarVariant {
+    ' Lớp này được tham chiếu trong các Entity khác nhưng không có source code cụ thể trong mô tả
+  }
+}
+
+package "Controllers" {
+  class CarCategoryController {
+    - carCategoryService : CarCategoryService
+    + createCategory()
+    + getAllCategories()
+    + getCategoryById()
+    + updateCategory()
+    + deleteCategory()
+  }
+
+  class CarImageController {
+    - fileStorageService : FileStorageService
+    - carImageRepository : CarImageRepository
+    - carVariantRepository : CarVariantRepository
+    - carImageMapper : CarImageMapper
+    + uploadMultipleImages()
+    + uploadImage()
+    + deleteImage()
+  }
+
+  class CarModelController {
+    - carModelService : CarModelService
+    + getAllModels()
+    + getAllActiveModels()
+    + createModel()
+    + getModelById()
+    + updateModel()
+    + deleteModel()
+  }
+
+  class CarStockController {
+    - carStockService : CarStockService
+    + importCarsBatch()
+    + autoReserveCar()
+    + startPdiProcess()
+    + markAsDelivered()
+    + releaseReservedCar()
+    + markAsDefective()
+    + getInventory()
+    + getAgingInventory()
+  }
+
+  class CarVariantController {
+    - carVariantService : CarVariantService
+    + getAllVariants()
+    + createVariant()
+    + getVariantDetail()
+    + updateVariant()
+    + deleteVariant()
+    + getAvailableVariants()
+  }
+
+  class ColorController {
+    - colorService : ColorService
+    + getAllColors()
+    + getColorById()
+    + createColor()
+    + updateColor()
+    + deleteColor()
+  }
+}
+
+' Mối quan hệ giữa các thực thể
+CarCategory "1" *-- "0..*" CarModel : có nhiều
+CarModel "1" *-- "0..*" CarVariant : có nhiều
+CarVariant "1" *-- "0..*" CarImage : có nhiều
+
+@enduml
