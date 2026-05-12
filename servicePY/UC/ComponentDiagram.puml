@@ -11,7 +11,6 @@ skinparam interface {
   BorderColor #1565C0
 }
 
-title Biểu đồ Thành phần (Component Diagram)\nHệ thống Tư vấn và Mua Xe Trực tuyến tích hợp AI
 
 ' --- LỚP CLIENT (FRONTEND) ---
 node "Máy khách (Client)" {

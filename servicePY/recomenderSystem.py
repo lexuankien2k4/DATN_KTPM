@@ -16,9 +16,8 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 
-# ══════════════════════════════════════════════
 #  TIỆN ÍCH CHUẨN HÓA VĂN BẢN
-# ══════════════════════════════════════════════
+
 
 def normalize_text(text: str) -> str:
     """NFC + lowercase + dấu phẩy số → chấm + rút gọn khoảng trắng."""
@@ -36,9 +35,7 @@ def remove_accents(text: str) -> str:
     )
 
 
-# ══════════════════════════════════════════════
 #  TỪ ĐIỂN INTENT
-# ══════════════════════════════════════════════
 
 TRAIT_KEYWORDS: dict[str, list[str]] = {
     "performance": [
@@ -104,15 +101,17 @@ BODY_TYPE_KEYWORDS: dict[str, list[str]] = {
 }
 
 FUEL_KEYWORDS: dict[str, list[str]] = {
-    "electric": ["điện", "dien", "ev", "electric", "xe điện", "xe dien", "thuần điện"],
-    "gasoline": ["xăng", "xang", "petrol", "gasoline", "xe xăng", "xe xang"],
+    # QUAN TRỌNG: hybrid phải check TRƯỚC electric vì "xăng điện" chứa "điện"
+    # "ev" dùng word-boundary (\bev\b) để không match "phev", "hev"
     "hybrid":   ["hybrid", "xăng điện", "xang dien", "hev", "phev", "mhev"],
+    "electric": ["xe điện", "xe dien", "thuần điện", "thuan dien", "electric",
+                 "ô tô điện", "o to dien"],
+    # "điện" và "ev" (bare) chỉ check sau khi hybrid đã bị loại trừ → xử lý trong code
+    "gasoline": ["xăng", "xang", "petrol", "gasoline", "xe xăng", "xe xang"],
 }
 
 
-# ══════════════════════════════════════════════
 #  PARSER GIÁ
-# ══════════════════════════════════════════════
 
 _ABOVE_KW  = r'(?:trên|tren|hơn|hon|ít nhất|it nhat|above|over|trở lên|tro len|tối thiểu|toi thieu)'
 _BELOW_KW  = r'(?:dưới|duoi|không quá|khong qua|tối đa|toi da|under|max|below)'
@@ -136,15 +135,39 @@ def _classify(text: str, val: float):
 
 def _extract_price(text: str) -> tuple[float | None, float | None]:
     # 1. Khoảng hai đầu "từ X đến Y"
+    # Vế phải hỗ trợ cả "1 tỷ" và "1 tỷ 5" (= 1.5 tỷ)
+    SEP = r'\s*(?:đến|den|tới|toi|đến khoảng|-|~)\s*'
+    TY_LE = r'(?:tỷ|ty|tỉ|ti)'
+
+    def _parse_right_side(s: str, unit_left: str) -> float:
+        """Parse vế phải khoảng giá, hỗ trợ '1 tỷ 5' dạng lẻ."""
+        s = s.strip()
+        # Dạng đầy đủ: số + đơn vị
+        m2 = re.match(_NUM + r'\s*' + _UNIT + r'$', s)
+        if m2: return _to_vnd(float(m2.group(1)), m2.group(2))
+        # Dạng số đơn (cùng đơn vị với vế trái, vd: "700 triệu đến 1 tỷ" ok)
+        m2 = re.match(r'(\d+(?:\.\d+)?)$', s)
+        if m2:
+            return _to_vnd(float(m2.group(1)), unit_left)
+        # Dạng "1 tỷ 5" — số_tỷ + số_lẻ
+        m2 = re.match(_NUM + r'\s*' + TY_LE + r'\s+([1-9])$', s)
+        if m2:
+            # TY_LE là non-capturing → group(1)=số nguyên, group(2)=số lẻ
+            return float(m2.group(1)) * _B + float(m2.group(2)) * 100_000_000
+        return None
+
     m = re.search(
-        r'(?:từ|tu)?\s*' + _NUM + r'\s*' + _UNIT +
-        r'\s*(?:đến|den|tới|toi|đến khoảng|-|~)\s*' + _NUM + r'\s*' + _UNIT,
+        r'(?:từ|tu)?\s*' + _NUM + r'\s*' + _UNIT + SEP,
         text
     )
     if m:
-        lo = _to_vnd(float(m.group(1)), m.group(2))
-        hi = _to_vnd(float(m.group(3)), m.group(4))
-        return min(lo, hi), max(lo, hi)
+        lo       = _to_vnd(float(m.group(1)), m.group(2))
+        rest     = text[m.end():]
+        # Lấy phần còn lại đến hết hoặc dấu ngăn cách tiếp theo
+        right_raw = re.split(r'[,;]|\s{2,}', rest)[0].strip()
+        hi = _parse_right_side(right_raw, m.group(2))
+        if hi is not None:
+            return min(lo, hi), max(lo, hi)
 
     # 2. "X tỷ/triệu rưỡi" (+0.5)
     m = re.search(_NUM + r'\s*' + _UNIT + r'\s+(?:rưỡi|ruoi|rưoi|ruỡi)', text)
@@ -179,9 +202,7 @@ def _extract_price(text: str) -> tuple[float | None, float | None]:
     return None, None
 
 
-# ══════════════════════════════════════════════
 #  PARSER INTENT ĐẦY ĐỦ
-# ══════════════════════════════════════════════
 
 def _extract_seats(text: str) -> int | None:
     for pat in [
@@ -214,10 +235,33 @@ def _extract_body_types(text: str, na: str) -> list[str]:
 
 
 def _extract_fuel_type(text: str, na: str) -> str | None:
-    for fuel, kws in FUEL_KEYWORDS.items():
-        for kw in kws:
-            if kw in text or remove_accents(kw) in na:
-                return fuel
+    """
+    Xác định loại nhiên liệu với ưu tiên: hybrid > electric > gasoline.
+    Dùng word-boundary cho 'ev' để không match 'phev', 'hev'.
+    """
+    # Bước 1: check hybrid trước (xăng điện, phev, hev, mhev, hybrid)
+    for kw in FUEL_KEYWORDS["hybrid"]:
+        kw_na = remove_accents(kw)
+        if kw in text or kw_na in na:
+            return "hybrid"
+
+    # Bước 2: check electric (từ cụm từ dài trước, tránh "điện" mồ côi match nhầm)
+    for kw in FUEL_KEYWORDS["electric"]:
+        kw_na = remove_accents(kw)
+        if kw in text or kw_na in na:
+            return "electric"
+    # "điện" bare và "ev" bare — check sau hybrid để tránh false positive
+    if re.search(r'(?<![a-z])điện(?![a-z])', text):  # "điện" không dính chữ la-tinh
+        return "electric"
+    if re.search(r'\bev\b', text):                   # word boundary
+        return "electric"
+
+    # Bước 3: gasoline
+    for kw in FUEL_KEYWORDS["gasoline"]:
+        kw_na = remove_accents(kw)
+        if kw in text or kw_na in na:
+            return "gasoline"
+
     return None
 
 
@@ -237,9 +281,8 @@ def parse_intent(raw_text: str) -> dict:
     return intent
 
 
-# ══════════════════════════════════════════════
 #  RECOMMENDER
-# ══════════════════════════════════════════════
+
 
 class VinFastRecommender:
     def __init__(self):
@@ -314,7 +357,7 @@ class VinFastRecommender:
         except Exception as e:
             logger.error(f"Lỗi nạp dữ liệu: {e}")
 
-    def recommend(self, user_text: str, top_k: int = 4) -> list | None:
+    def recommend(self, user_text: str, top_k: int = 3) -> list | None:
         if not self.is_ready:
             return None
 
@@ -434,9 +477,9 @@ class VinFastRecommender:
         return results[:top_k]
 
 
-# ══════════════════════════════════════════════
+
 #  FLASK APP
-# ══════════════════════════════════════════════
+
 
 recommender = VinFastRecommender()
 

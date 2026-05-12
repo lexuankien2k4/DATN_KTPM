@@ -1,0 +1,60 @@
+@startuml
+!theme plain
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+node "Hệ thống" as Root
+
+node "Người dùng" as KH
+node "Quản lý viên" as AD
+
+Root -- KH
+Root -- AD
+
+' Nhánh Khách hàng
+node "Tư vấn & Lựa chọn" as KH1
+node "Gợi ý xe bằng AI" as KH1_1
+node "Tính dự toán trả góp" as KH1_2
+
+node "Giao dịch" as KH2
+node "Đặt cọc trực tuyến" as KH2_1
+node "Thanh toán (VNPay)" as KH2_2
+
+KH -- KH1
+KH -- KH2
+KH1 -- KH1_1
+KH1 -- KH1_2
+KH2 -- KH2_1
+KH2 -- KH2_2
+
+' Nhánh Quản trị & Nhân viên (Gộp)
+node "Quản lý Nghiệp vụ" as AD1
+node "Quản lý hợp đồng" as AD1_1
+node "Quản lý đặt cọc" as AD1_2
+node "Ký kết điện tử" as AD1_3
+
+node "Quản lý Kho xe" as AD2
+node "Nhập kho (VIN)" as AD2_1
+node "Kiểm tra PDI" as AD2_2
+node "Bàn giao xe" as AD2_3
+
+node "Quản lý Danh mục" as AD3
+node "Dòng xe & Phiên bản" as AD3_1
+node "Màu sắc & Ngân hàng" as AD3_2
+node "Quản lý người dùng" as AD3_3
+
+AD -- AD1
+AD -- AD2
+AD -- AD3
+AD1 -- AD1_1
+AD1 -- AD1_2
+AD1 -- AD1_3
+AD2 -- AD2_1
+AD2 -- AD2_2
+AD2 -- AD2_3
+AD3 -- AD3_1
+AD3 -- AD3_2
+AD3 -- AD3_3
+
+@enduml

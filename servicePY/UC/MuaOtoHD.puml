@@ -16,7 +16,7 @@ repeat while (Thông tin hợp lệ?) is (Không) not (Có)
 :Khách hàng ký tên trên màn hình;
 
 
-    :Hiển thị mã QR đặt cọc (50 triệu);
+    :Hiển thị mã QR thanh toán (VNPay);
     if (Thanh toán thành công?) then (Có)
         :Hệ thống cập nhật trạng thái đơn hàng;
         :Tự động giữ xe trong kho (Gán số VIN);
