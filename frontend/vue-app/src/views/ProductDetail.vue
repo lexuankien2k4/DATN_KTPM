@@ -90,7 +90,7 @@
 
           <div class="d-flex gap-3">
             <router-link :to="{ path: '/deposit', query: { id: product.id } }" class="btn btn-primary btn-lg flex-grow-1 fw-bold rounded-3 shadow">
-              <i class="fas fa-handshake me-2"></i>ĐẶT CỌC NGAY
+              <i class="fas fa-handshake me-2"></i>Mua ngay
             </router-link>
             <button class="btn btn-outline-secondary btn-lg rounded-3 px-3">
               <i class="far fa-heart fs-5"></i>

@@ -32,16 +32,21 @@ public class AiRecommendationService {
                         .carId(Long.valueOf(item.get("car_id").toString()))
                         .name((String) item.get("name"))
                         .imageUrl((String) item.get("image_url"))
-                        .category((String) item.get("category"))
+                        // SỬA Ở ĐÂY: Khớp key "category_name" từ Python truyền sang
+                        .category((String) item.get("category_name"))
                         .price(Double.valueOf(item.get("price").toString()))
                         .matchScore(Double.valueOf(item.get("match_score").toString()))
                         .build()
                 ).toList();
             }
         } catch (Exception e) {
-
             System.err.println("Lỗi kết nối AI Python: " + e.getMessage());
+            // SỬA Ở ĐÂY: Ném lỗi để VueJS tự bắt và in ra "Hệ thống đang bận..."
+            throw new RuntimeException("Dạ, hệ thống đang bận, vui lòng thử lại sau!");
         }
+
+        // Trả về mảng rỗng [] nếu status là "off_topic" hoặc Python tìm không thấy xe
+        // VueJS sẽ nhận mảng rỗng này và in ra câu "em thấy mình có nhắc đến xe nhưng chưa rõ nhu cầu..."
         return Collections.emptyList();
     }
 }

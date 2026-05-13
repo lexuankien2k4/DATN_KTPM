@@ -1,6 +1,5 @@
 <template>
   <div class="chat-layout d-flex flex-column">
-    <!-- Messages -->
     <main class="chat-messages flex-grow-1 overflow-y-auto" ref="chatBox">
       <div class="container-fluid px-3 px-md-5 py-4">
         <div
@@ -8,7 +7,6 @@
           :key="index"
           :class="['d-flex w-100 mb-4 chat-msg-row', msg.type === 'user' ? 'justify-content-end' : 'justify-content-start']"
         >
-          <!-- AI avatar -->
           <div v-if="msg.type !== 'user'" class="chat-avatar me-3 flex-shrink-0">
             <i class="fas fa-robot text-white"></i>
           </div>
@@ -18,7 +16,6 @@
               {{ msg.text }}
             </div>
 
-            <!-- Car cards -->
             <div v-if="msg.cars && msg.cars.length > 0" class="row g-3 mt-2 w-100">
               <div v-for="car in msg.cars" :key="car.car_id" class="col-12 col-sm-6 col-xl-4">
                 <div class="card car-card h-100 border-0 shadow-sm">
@@ -46,13 +43,11 @@
             </div>
           </div>
 
-          <!-- User avatar -->
           <div v-if="msg.type === 'user'" class="chat-avatar chat-avatar--user ms-3 flex-shrink-0">
             <i class="fas fa-user text-white"></i>
           </div>
         </div>
 
-        <!-- Typing indicator -->
         <div v-if="loading" class="d-flex justify-content-start mb-4">
           <div class="chat-avatar me-3 flex-shrink-0"><i class="fas fa-robot text-white"></i></div>
           <div class="chat-bubble chat-bubble--ai chat-bubble--typing">
@@ -62,7 +57,6 @@
       </div>
     </main>
 
-    <!-- Input -->
     <footer class="chat-footer bg-white border-top px-3 px-md-5 py-3">
       <div class="input-group input-group-lg shadow-sm rounded-4 overflow-hidden border">
         <input
@@ -116,18 +110,47 @@ const getImageUrl = (path) => {
 const handleSendMessage = async () => {
   const text = userInput.value.trim()
   if (!text || loading.value) return
+  
+  // 1. Thêm tin nhắn của user vào store
   chatStore.addMessage({ type: 'user', text })
   userInput.value = ''
   loading.value = true
+  
   try {
+    // 2. Gọi API
     const response = await api.post('/api/ai/chat-consult', { message: text })
+    
+    // 3. Xử lý trường hợp "Không liên quan đến xe" (off_topic)
+    if (response.data.status === 'off_topic') {
+       chatStore.addMessage({
+          type: 'ai',
+          text: response.data.message, 
+          cars: []
+       })
+       return; 
+    }
+
+    // 4. Xử lý luồng bình thường (Tìm kiếm xe)
+    const cars = response.data.result ?? []
+    let aiText = response.data.message || 'Dạ, đây là các mẫu xe phù hợp nhất với yêu cầu của bạn:'
+    
+    // SỬA Ở ĐÂY: Update lại câu text bao quát nhất
+    if (cars.length === 0) {
+      aiText = 'Dạ, em chưa tìm thấy mẫu xe nào khớp hoặc nhu cầu của mình chưa đủ thông tin. Bạn có thể chia sẻ thêm về khoảng giá, số chỗ ngồi hoặc kiểu dáng xe (ví dụ: gầm cao, điện) được không ạ?'
+    }
+
+    // 5. Thêm tin nhắn của AI vào giao diện
     chatStore.addMessage({
       type: 'ai',
-      text: response.data.message || 'Kết quả gợi ý:',
-      cars: response.data.result ?? []
+      text: aiText,
+      cars: cars
     })
-  } catch {
-    chatStore.addMessage({ type: 'ai', text: 'Hệ thống đang bận, vui lòng thử lại sau!' })
+    
+  } catch (error) {
+    chatStore.addMessage({ 
+      type: 'ai', 
+      text: 'Dạ, hệ thống tư vấn đang bận hoặc gián đoạn. Vui lòng thử lại sau giây lát nhé!' 
+    })
   } finally {
     loading.value = false
   }
@@ -140,14 +163,17 @@ onMounted(scrollToBottom)
 
 <style scoped>
 .chat-layout {
-  height: 100vh;
+  /* TÍNH TOÁN LẠI CHIỀU CAO: Trừ đi 80px (chiều cao của Navbar/Header) */
+  height: calc(100vh - 80px);
+  /* ĐẨY KHUNG CHAT XUỐNG DƯỚI HEADER */
+  margin-top: 80px;
   background: #f8fafc;
   font-family: 'Segoe UI', system-ui, sans-serif;
   overflow: hidden;
 }
 
 .chat-messages {
-  padding-top: 80px; /* for fixed navbar */
+  /* Đã xóa padding-top: 80px ở đây vì layout tổng đã được đẩy xuống */
   scrollbar-width: thin;
   scrollbar-color: #dde1e7 transparent;
 }

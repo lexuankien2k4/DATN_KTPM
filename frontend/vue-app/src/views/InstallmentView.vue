@@ -181,17 +181,18 @@
     </div>
   </main> 
 
-  <div id="schedule-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" :class="{ 'hidden': !isModalOpen }">
-    <div id="schedule-modal-overlay" @click="isModalOpen = false" class="fixed inset-0 bg-gray-900 bg-opacity-70 backdrop-blur-sm transition-opacity"></div>
+  <div id="schedule-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8" :class="{ 'hidden': !isModalOpen }">
+    <div id="schedule-modal-overlay" @click="isModalOpen = false" class="fixed inset-0 bg-gray-900 bg-opacity-60 transition-opacity"></div>
     
-    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col z-10 animate-fade-in-up">
-      <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50 rounded-t-xl">
-        <h2 class="text-lg md:text-xl font-bold text-gray-800">Bảng Kế Hoạch Trả Nợ (Dự kiến)</h2>
-        <div class="flex items-center gap-3">
-          <button @click="downloadCSV" id="download-csv-btn" class="bg-emerald-500 text-white px-4 py-2 text-sm rounded-lg font-bold hover:bg-emerald-600 transition-colors flex items-center gap-2 shadow-sm">
-            <i class="fas fa-file-csv"></i> Xuất Excel
+    <div class="relative bg-white shadow-2xl w-full max-w-6xl max-h-[85vh] flex flex-col z-10 animate-fade-in-up" style="border-radius: 4px;">
+      
+      <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200">
+        <h2 class="text-xl font-bold text-gray-800">Bảng Kế Hoạch Trả Nợ (Dự kiến)</h2>
+        <div class="flex items-center gap-4">
+          <button @click="downloadCSV" id="download-csv-btn" class="bg-[#00a65a] text-white px-4 py-2 text-sm rounded shadow-sm hover:bg-green-600 transition-colors flex items-center gap-2 font-semibold">
+            <i class="fas fa-file-excel"></i> Xuất Excel
           </button>
-          <button @click="isModalOpen = false" id="close-modal-btn" class="text-gray-400 hover:text-red-500 hover:bg-red-50 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+          <button @click="isModalOpen = false" id="close-modal-btn" class="text-gray-400 hover:text-gray-600 transition-colors">
             <i class="fas fa-times text-xl"></i>
           </button>
         </div>
@@ -202,26 +203,26 @@
           <i class="fas fa-spinner fa-spin text-4xl text-blue-500 mb-4 block"></i> Đang khởi tạo bảng tính...
         </div>
         
-        <div v-else-if="scheduleData.length > 0" class="border rounded-lg overflow-hidden">
-          <table class="w-full text-sm text-left repayment-table">
-            <thead class="bg-gray-100 text-gray-700 font-bold uppercase text-xs">
+        <div v-else-if="scheduleData.length > 0">
+          <table class="w-full text-sm text-left border-collapse border border-gray-200">
+            <thead class="bg-gray-50 text-gray-700 font-bold">
               <tr>
-                <th class="px-4 py-3 text-center border-r border-gray-200">Kỳ (Tháng)</th>
-                <th class="px-4 py-3 border-r border-gray-200 text-right">Dư nợ đầu kỳ</th>
-                <th class="px-4 py-3 border-r border-gray-200 text-right">Gốc trả hàng tháng</th>
-                <th class="px-4 py-3 border-r border-gray-200 text-right">Lãi trả hàng tháng</th>
-                <th class="px-4 py-3 border-r border-gray-200 text-right text-blue-700 bg-blue-50/50">Gốc + Lãi (Thanh toán)</th>
-                <th class="px-4 py-3 text-right">Dư nợ cuối kỳ</th>
+                <th class="px-4 py-3 text-center border border-gray-200">Kỳ (Tháng)</th>
+                <th class="px-4 py-3 text-right border border-gray-200">Dư nợ đầu kỳ</th>
+                <th class="px-4 py-3 text-right border border-gray-200">Gốc trả hàng tháng</th>
+                <th class="px-4 py-3 text-right border border-gray-200 text-red-500">Lãi trả hàng tháng</th>
+                <th class="px-4 py-3 text-right border border-gray-200 text-blue-700">Gốc + Lãi (Thanh toán)</th>
+                <th class="px-4 py-3 text-right border border-gray-200 text-gray-500">Dư nợ cuối kỳ</th>
               </tr>
             </thead>
-            <tbody id="schedule-body" class="divide-y divide-gray-200">
+            <tbody id="schedule-body" class="bg-white">
               <tr v-for="row in scheduleData" :key="row.month" class="hover:bg-gray-50 transition-colors">
-                <td class="px-4 py-2.5 text-center font-medium text-gray-600 border-r border-gray-200">{{ row.month }}</td>
-                <td class="px-4 py-2.5 text-right font-mono">{{ currencyFormatter.format(row.remainingBalance + row.principalPaid) }}</td>
-                <td class="px-4 py-2.5 text-right font-mono">{{ currencyFormatter.format(row.principalPaid) }}</td>
-                <td class="px-4 py-2.5 text-right font-mono text-red-500">{{ currencyFormatter.format(row.interestPaid) }}</td>
-                <td class="px-4 py-2.5 text-right font-mono font-bold text-blue-700 bg-blue-50/30 border-r border-gray-200">{{ currencyFormatter.format(row.totalPayment) }}</td>
-                <td class="px-4 py-2.5 text-right font-mono text-gray-500">{{ currencyFormatter.format(row.remainingBalance) }}</td>
+                <td class="px-4 py-3 text-center text-gray-600 border border-gray-200">{{ row.month }}</td>
+                <td class="px-4 py-3 text-right text-gray-600 border border-gray-200">{{ currencyFormatter.format(row.remainingBalance + row.principalPaid) }}</td>
+                <td class="px-4 py-3 text-right text-gray-600 border border-gray-200">{{ currencyFormatter.format(row.principalPaid) }}</td>
+                <td class="px-4 py-3 text-right text-red-500 border border-gray-200">{{ currencyFormatter.format(row.interestPaid) }}</td>
+                <td class="px-4 py-3 text-right font-bold text-blue-700 border border-gray-200">{{ currencyFormatter.format(row.totalPayment) }}</td>
+                <td class="px-4 py-3 text-right text-gray-500 border border-gray-200">{{ currencyFormatter.format(row.remainingBalance) }}</td>
               </tr>
             </tbody>
           </table>

@@ -101,15 +101,68 @@ BODY_TYPE_KEYWORDS: dict[str, list[str]] = {
 }
 
 FUEL_KEYWORDS: dict[str, list[str]] = {
-    # QUAN TRỌNG: hybrid phải check TRƯỚC electric vì "xăng điện" chứa "điện"
+    # QUAN TRỌNG: dich_vu phải check TRƯỚC electric vì "xăng điện" chứa "điện"
     # "ev" dùng word-boundary (\bev\b) để không match "phev", "hev"
-    "hybrid":   ["hybrid", "xăng điện", "xang dien", "hev", "phev", "mhev"],
+    "dich_vu":  ["dịch vụ", "dich vu", "service", "bảo dưỡng", "bao duong"],
     "electric": ["xe điện", "xe dien", "thuần điện", "thuan dien", "electric",
                  "ô tô điện", "o to dien"],
-    # "điện" và "ev" (bare) chỉ check sau khi hybrid đã bị loại trừ → xử lý trong code
+    # "điện" và "ev" (bare) chỉ check sau khi dich_vu đã bị loại trừ → xử lý trong code
     "gasoline": ["xăng", "xang", "petrol", "gasoline", "xe xăng", "xe xang"],
 }
 
+
+
+
+#  KIỂM TRA CÂU HỎI CÓ LIÊN QUAN XE KHÔNG
+
+# Keyword đặc thù xe — dùng word-boundary để tránh false positive kiểu "cong thuc" chứa "o to"
+_CAR_SPECIFIC_KWS: list[str] = [
+    'xe', 'o to', 'oto', 'car',
+    'suv', 'sedan', 'mpv', 'hatchback', 'pickup', 'coupe',
+    'xang', 'dien', 'electric', 'petrol', 'ev',
+    'dich vu', 'bao duong', 'service',
+    'dong co', 'turbo',
+    'gam cao', 'awd', '4wd', '4x4',
+    'vinfast', 'vf',
+    'lai thu', 'test drive',
+]
+
+# Pattern ngữ cảnh — chỉ tính khi có context xe rõ ràng
+_CAR_CONTEXT_PATTERNS: list[str] = [
+    r'(?:chay)\s.{0,20}(?:duong|km)',
+    r'(?:duong)\s.{0,20}(?:chay)',
+]
+
+
+def _kw_boundary_pattern(kw: str) -> str:
+    """Tạo regex word-boundary, hỗ trợ khoảng trắng linh hoạt."""
+    escaped = re.escape(kw).replace(r'\ ', r'\s+')
+    return r'(?<!\w)' + escaped + r'(?!\w)'
+
+
+# Compile sẵn để tái sử dụng nhiều request
+_CAR_KW_COMPILED: list[re.Pattern] = [
+    re.compile(_kw_boundary_pattern(kw)) for kw in _CAR_SPECIFIC_KWS
+]
+_CAR_CTX_COMPILED: list[re.Pattern] = [
+    re.compile(pat) for pat in _CAR_CONTEXT_PATTERNS
+]
+
+
+def is_car_related(raw_text: str) -> bool:
+    """
+    Trả về True nếu câu hỏi liên quan đến xe / dịch vụ xe.
+    Dùng word-boundary để tránh khớp nhầm (vd: 'cong thuc' khớp 'o to').
+    """
+    t  = normalize_text(raw_text)
+    na = remove_accents(t)
+    if len(t.strip()) < 3:
+        return False
+    if any(pat.search(na) for pat in _CAR_KW_COMPILED):
+        return True
+    if any(pat.search(na) for pat in _CAR_CTX_COMPILED):
+        return True
+    return False
 
 #  PARSER GIÁ
 
@@ -239,18 +292,18 @@ def _extract_fuel_type(text: str, na: str) -> str | None:
     Xác định loại nhiên liệu với ưu tiên: hybrid > electric > gasoline.
     Dùng word-boundary cho 'ev' để không match 'phev', 'hev'.
     """
-    # Bước 1: check hybrid trước (xăng điện, phev, hev, mhev, hybrid)
-    for kw in FUEL_KEYWORDS["hybrid"]:
+    # Bước 1: check dich_vu trước
+    for kw in FUEL_KEYWORDS["dich_vu"]:
         kw_na = remove_accents(kw)
         if kw in text or kw_na in na:
-            return "hybrid"
+            return "dich_vu"
 
     # Bước 2: check electric (từ cụm từ dài trước, tránh "điện" mồ côi match nhầm)
     for kw in FUEL_KEYWORDS["electric"]:
         kw_na = remove_accents(kw)
         if kw in text or kw_na in na:
             return "electric"
-    # "điện" bare và "ev" bare — check sau hybrid để tránh false positive
+    # "điện" bare và "ev" bare — check sau dich_vu để tránh false positive
     if re.search(r'(?<![a-z])điện(?![a-z])', text):  # "điện" không dính chữ la-tinh
         return "electric"
     if re.search(r'\bev\b', text):                   # word boundary
@@ -275,7 +328,7 @@ def parse_intent(raw_text: str) -> dict:
         "seat_capacity": _extract_seats(text),
         "traits":        _extract_traits(text, na),
         "body_types":    _extract_body_types(text, na),
-        "fuel_type":     _extract_fuel_type(text, na),
+        "car_category":  _extract_fuel_type(text, na),
     }
     logger.info(f"Intent parsed: {intent}")
     return intent
@@ -357,11 +410,29 @@ class VinFastRecommender:
         except Exception as e:
             logger.error(f"Lỗi nạp dữ liệu: {e}")
 
-    def recommend(self, user_text: str, top_k: int = 3) -> list | None:
+def recommend(self, user_text: str, top_k: int = 3) -> list | None | str:
         if not self.is_ready:
             return None
 
+        if not is_car_related(user_text):
+            logger.info(f"Cau hoi khong lien quan xe: {user_text}")
+            return "off_topic"
+
         intent = parse_intent(user_text)
+
+        has_specific_intent = any([
+            intent["min_price"] is not None,
+            intent["max_price"] is not None,
+            intent["seat_capacity"] is not None,
+            len(intent["traits"]) > 0,
+            len(intent["body_types"]) > 0,
+            intent["car_category"] is not None
+        ])
+
+        # Báo cờ yêu cầu làm rõ nếu các key đều None
+        if not has_specific_intent:
+            logger.info("Câu hỏi chứa từ khóa xe nhưng intent rỗng: " + user_text)
+            return "clarify_intent" 
 
         with self.lock:
             df_work   = self.df_raw.copy()
@@ -369,6 +440,8 @@ class VinFastRecommender:
 
         # ── Hard filtering ────────────────────────────────────────
         mask = pd.Series(True, index=df_work.index)
+
+        # ... (Phần code bên dưới giữ nguyên) ...
 
         if intent["min_price"] is not None:
             mask &= (df_work['effective_price'] >= intent["min_price"])
@@ -383,14 +456,14 @@ class VinFastRecommender:
                 bm |= (df_work['body_type'].str.lower() == bt.lower())
             mask &= bm
 
-        # Lọc loại nhiên liệu qua category_name (do CarCategory phân loại)
-        if intent["fuel_type"]:
+        # Lọc theo CarCategory
+        if intent["car_category"]:
             FUEL_CAT_MAP = {
                 "electric": ["điện", "dien", "ev"],
                 "gasoline": ["xăng", "xang", "petrol"],
-                "hybrid":   ["hybrid", "xăng điện"],
+                "dich_vu":  ["dịch vụ", "dich vu", "service"],
             }
-            fuel_kws = FUEL_CAT_MAP.get(intent["fuel_type"], [])
+            fuel_kws = FUEL_CAT_MAP.get(intent["car_category"], [])
             if fuel_kws:
                 fm = pd.Series(False, index=df_work.index)
                 cat_lower = df_work['category_name'].str.lower()
@@ -499,10 +572,32 @@ def recommend_api():
     message = data.get('message', '').strip()
     if not message:
         return jsonify({"status": "error", "message": "Thiếu trường 'message'"}), 400
-    logger.info(f"Yêu cầu tư vấn: {message}")
+    if not is_car_related(message):
+        logger.info(f"Câu hỏi không liên quan xe, bỏ qua: {message}")
+        return jsonify({
+            "status": "off_topic",
+            "message": "Xin lỗi, tôi chỉ có thể tư vấn về xe và dịch vụ xe VinFast. Bạn có thể hỏi về loại xe, giá, tính năng hoặc dịch vụ bảo dưỡng.",
+        }), 200
+    logger.info(f"Yeu cau tu van: {message}")
     results = recommender.recommend(message)
+    
     if results is None:
-        return jsonify({"status": "error", "message": "Hệ thống đang khởi động, vui lòng thử lại sau"}), 503
+        return jsonify({"status": "error", "message": "He thong dang khoi dong, vui long thu lai sau"}), 503
+        
+    if results == "off_topic":
+        return jsonify({
+            "status": "off_topic",
+            "message": "Xin loi, toi chi co the tu van ve xe va dich vu xe VinFast.",
+        }), 200
+
+    # XỬ LÝ TRẢ VỀ TEXT KHI KHÔNG CÓ KEY NÀO
+    if results == "clarify_intent":
+        return jsonify({
+            "status": "off_topic", # Dùng status này để Frontend chặn hiển thị mảng xe
+            "message": "Dạ, em thấy mình có nhắc đến xe nhưng chưa rõ nhu cầu. Bạn có thể chia sẻ thêm về khoảng giá, số chỗ ngồi hoặc kiểu dáng xe (ví dụ: gầm cao, điện) được không ạ?",
+            "data": []
+        }), 200
+
     return jsonify({"status": "success", "data": results})
 
 

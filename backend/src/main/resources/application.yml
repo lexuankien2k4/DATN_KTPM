@@ -32,6 +32,6 @@ jwt:
 vnp:
   payUrl: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
   tmnCode: "JPXWTQ76"
-  hashSecret: "EEMGLJ1Z24QQM4CHWI8OJCHEU4HSP0LC"
+  hashSecret: "PST34F8S69Q185RFA4TV6JASTSRSK2RC"
   apiUrl: https://sandbox.vnpayment.vn/merchant_webapi/api/transaction
   returnUrl: http://localhost:3000/payment-callback
